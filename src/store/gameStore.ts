@@ -8,6 +8,13 @@ export interface ChatMessage {
   timestamp?: number;
 }
 
+export interface TestResult {
+  input: string;
+  expected: string;
+  actual: string;
+  passed: boolean;
+}
+
 interface GameStore {
   roomId: string | null;
   players: PlayerState[];
@@ -17,6 +24,10 @@ interface GameStore {
   code: string;
   chatMessages: ChatMessage[];
   myUserId: string | null;
+  myName: string;
+  testResults: TestResult[] | null;
+  submitting: boolean;
+  connecting: boolean;
 
   setRoomId: (id: string) => void;
   setPlayers: (players: PlayerState[]) => void;
@@ -25,10 +36,15 @@ interface GameStore {
   setTimeRemaining: (time: number) => void;
   setCode: (code: string) => void;
   setMyUserId: (id: string) => void;
+  setMyName: (name: string) => void;
+  setTestResults: (results: TestResult[] | null) => void;
+  setSubmitting: (v: boolean) => void;
+  setConnecting: (v: boolean) => void;
 
   addPlayer: (player: PlayerState) => void;
   removePlayer: (userId: string) => void;
   updatePlayerScore: (userId: string, score: number) => void;
+  updatePlayerSolved: (userId: string, solved: boolean) => void;
   addChatMessage: (msg: ChatMessage) => void;
   reset: () => void;
 }
@@ -42,6 +58,10 @@ const initialState = {
   code: "",
   chatMessages: [],
   myUserId: null,
+  myName: "",
+  testResults: null,
+  submitting: false,
+  connecting: true,
 };
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -54,6 +74,10 @@ export const useGameStore = create<GameStore>((set) => ({
   setTimeRemaining: (timeRemaining) => set({ timeRemaining }),
   setCode: (code) => set({ code }),
   setMyUserId: (myUserId) => set({ myUserId }),
+  setMyName: (myName) => set({ myName }),
+  setTestResults: (testResults) => set({ testResults }),
+  setSubmitting: (submitting) => set({ submitting }),
+  setConnecting: (connecting) => set({ connecting }),
 
   addPlayer: (player) =>
     set((state) => ({
@@ -69,6 +93,12 @@ export const useGameStore = create<GameStore>((set) => ({
     set((state) => ({
       players: state.players.map((p) =>
         p.userId === userId ? { ...p, score } : p
+      ),
+    })),
+  updatePlayerSolved: (userId, solved) =>
+    set((state) => ({
+      players: state.players.map((p) =>
+        p.userId === userId ? { ...p, solved } : p
       ),
     })),
   addChatMessage: (msg) =>

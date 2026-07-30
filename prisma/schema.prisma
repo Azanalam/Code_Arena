@@ -61,6 +61,7 @@ model Problem {
   title       String
   slug        String   @unique
   difficulty  String
+  category    String   @default("javascript")
   description String
   examples    Json
   testCases   Json
