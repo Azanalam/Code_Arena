@@ -14,9 +14,39 @@ export default function LobbyPage() {
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [matching, setMatching] = useState(false);
   const [name, setName] = useState(myName || "");
 
   const getPlayerName = () => name.trim() || `Player_${Math.random().toString(36).slice(2, 6)}`;
+
+  const startQuickMatch = () => {
+    if (!name.trim()) return;
+    setMatching(true);
+    const socket = getSocket();
+    if (!socket.connected) socket.connect();
+    const playerName = getPlayerName();
+
+    socket.emit("quick-match", { name: playerName }, (res: { queued: boolean } | { error: string }) => {
+      if ("error" in res) {
+        setMatching(false);
+        return;
+      }
+      const myUserId = socket.id ?? "";
+      socket.on("match-found", (data: { roomId: string }) => {
+        socket.off("match-found");
+        setRoomId(data.roomId);
+        setMyUserId(myUserId);
+        setMyName(playerName);
+        setMatching(false);
+        router.push(`/game/${data.roomId}`);
+      });
+    });
+  };
+
+  const cancelQuickMatch = () => {
+    setMatching(false);
+    getSocket().emit("cancel-match");
+  };
 
   const createRoom = () => {
     if (!name.trim()) return;
@@ -93,6 +123,33 @@ export default function LobbyPage() {
               <div className="w-full border-t border-zinc-800" />
             </div>
             <div className="relative flex justify-center text-xs">
+              <span className="px-3 bg-zinc-900/50 text-zinc-600">or fight a stranger</span>
+            </div>
+          </div>
+
+          {matching ? (
+            <button
+              onClick={cancelQuickMatch}
+              className="w-full py-3 bg-gradient-to-r from-purple-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-3"
+            >
+              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Searching for opponent... (click to cancel)
+            </button>
+          ) : (
+            <button
+              onClick={startQuickMatch}
+              disabled={loading || !name.trim()}
+              className="w-full py-3 bg-gradient-to-r from-purple-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 text-white rounded-lg font-medium transition-all"
+            >
+              Quick Play
+            </button>
+          )}
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-zinc-800" />
+            </div>
+            <div className="relative flex justify-center text-xs">
               <span className="px-3 bg-zinc-900/50 text-zinc-600">or join existing</span>
             </div>
           </div>
@@ -145,6 +202,10 @@ export default function LobbyPage() {
           <span className="text-zinc-800 text-xs">|</span>
           <button onClick={() => router.push("/leaderboard")} className="text-sm text-zinc-600 hover:text-blue-400 transition-colors">
             Leaderboard
+          </button>
+          <span className="text-zinc-800 text-xs">|</span>
+          <button onClick={() => router.push("/profile")} className="text-sm text-zinc-600 hover:text-blue-400 transition-colors">
+            Profile
           </button>
         </div>
 

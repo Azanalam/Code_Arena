@@ -48,3 +48,50 @@ export async function runTestCases(
     results,
   };
 }
+
+function normalizeMarkup(code: string, category: string): string {
+  let s = code
+    .trim()
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .toLowerCase();
+
+  s = s.replace(/\s+/g, " ");
+
+  if (category === "html") {
+    s = s.replace(/>\s+</g, "><");
+    s = s.replace(/\s+>/g, ">");
+    s = s.replace(/<\s+/g, "<");
+  } else {
+    s = s.replace(/\s*([{}:;,])\s*/g, "$1");
+    s = s.replace(/;}/g, "}");
+  }
+
+  return s.trim();
+}
+
+export function runMarkupTestCases(
+  code: string,
+  testCases: { input: string; expected: string }[],
+  category: string
+): {
+  passed: boolean;
+  results: { input: string; expected: string; actual: string; passed: boolean }[];
+} {
+  const results = testCases.map((tc) => {
+    const normalized = normalizeMarkup(code, category);
+    const expected = normalizeMarkup(tc.expected, category);
+    const passed = expected === "" ? normalized === "" : normalized.includes(expected);
+    return {
+      input: tc.input,
+      expected: tc.expected,
+      actual: code,
+      passed,
+    };
+  });
+
+  return {
+    passed: results.every((r) => r.passed),
+    results,
+  };
+}

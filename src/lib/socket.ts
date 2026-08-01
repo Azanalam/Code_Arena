@@ -21,7 +21,7 @@ export function useSocket(roomId: string) {
     setPlayers, setProblem, setStatus, setTimeRemaining,
     addChatMessage, addPlayer, removePlayer, updatePlayerScore,
     setConnecting, setTestResults, setSubmitting, updatePlayerSolved,
-    setCode,
+    setCode, setCountdown,
   } = useGameStore();
 
   useEffect(() => {
@@ -37,6 +37,7 @@ export function useSocket(roomId: string) {
       setProblem(state.problem);
       setStatus(state.status);
       setTimeRemaining(state.timeRemaining);
+      setCountdown(0);
       setConnecting(false);
     };
 
@@ -57,10 +58,15 @@ export function useSocket(roomId: string) {
     s.on("player-joined", (player) => addPlayer(player));
     s.on("player-left", (userId) => removePlayer(userId));
     s.on("score-update", ({ userId, score }) => updatePlayerScore(userId, score));
+    s.on("countdown", ({ count }) => {
+      setCountdown(count);
+      setStatus("countdown");
+    });
     s.on("game-start", ({ problem, timeLimit }) => {
       setProblem(problem);
       setStatus("playing");
       setTimeRemaining(timeLimit);
+      setCountdown(0);
       if (problem?.starterCode) setCode(problem.starterCode);
     });
     s.on("timer-tick", (time) => setTimeRemaining(time));
@@ -87,6 +93,7 @@ export function useSocket(roomId: string) {
       s.off("player-joined");
       s.off("player-left");
       s.off("score-update");
+      s.off("countdown");
       s.off("game-start");
       s.off("timer-tick");
       s.off("game-over");

@@ -9,6 +9,7 @@ export interface ProblemData {
   id: string;
   title: string;
   difficulty: Difficulty;
+  category: string;
   description: string;
   examples: { input: string; output: string; explanation?: string }[];
   testCases: TestCase[];

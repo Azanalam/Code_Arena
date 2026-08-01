@@ -19,7 +19,7 @@ interface GameStore {
   roomId: string | null;
   players: PlayerState[];
   problem: ProblemData | null;
-  status: "waiting" | "playing" | "review" | "finished";
+  status: "waiting" | "countdown" | "playing" | "review" | "finished";
   timeRemaining: number;
   code: string;
   chatMessages: ChatMessage[];
@@ -28,6 +28,7 @@ interface GameStore {
   testResults: TestResult[] | null;
   submitting: boolean;
   connecting: boolean;
+  countdown: number;
 
   setRoomId: (id: string) => void;
   setPlayers: (players: PlayerState[]) => void;
@@ -40,6 +41,7 @@ interface GameStore {
   setTestResults: (results: TestResult[] | null) => void;
   setSubmitting: (v: boolean) => void;
   setConnecting: (v: boolean) => void;
+  setCountdown: (count: number) => void;
 
   addPlayer: (player: PlayerState) => void;
   removePlayer: (userId: string) => void;
@@ -62,6 +64,7 @@ const initialState = {
   testResults: null,
   submitting: false,
   connecting: true,
+  countdown: 0,
 };
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -78,6 +81,7 @@ export const useGameStore = create<GameStore>((set) => ({
   setTestResults: (testResults) => set({ testResults }),
   setSubmitting: (submitting) => set({ submitting }),
   setConnecting: (connecting) => set({ connecting }),
+  setCountdown: (countdown) => set({ countdown }),
 
   addPlayer: (player) =>
     set((state) => ({

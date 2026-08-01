@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { PrismaClient } from "./src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { runTestCases } from "./src/lib/piston";
+import { runTestCases, runMarkupTestCases } from "./src/lib/piston";
 
 const prismaAdapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter: prismaAdapter });
@@ -28,6 +28,38 @@ const rooms = new Map<string, {
 }>();
 
 const leaderboard: { name: string; score: number; date: number }[] = [];
+
+let matchQueue: { socketId: string; name: string }[] = [];
+
+function generateRoomCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+async function fetchRandomProblem(category?: string, difficulty?: string) {
+  const where: any = {};
+  if (category && category !== "all") where.category = category;
+  if (difficulty && difficulty !== "all") where.difficulty = difficulty;
+  const problemCount = await prisma.problem.count({ where });
+  if (problemCount === 0) return null;
+  const skip = Math.floor(Math.random() * problemCount);
+  const dbProblem = await prisma.problem.findFirst({ where, skip });
+  if (!dbProblem) return null;
+  return {
+    id: dbProblem.id,
+    title: dbProblem.title,
+    difficulty: dbProblem.difficulty,
+    category: dbProblem.category,
+    description: dbProblem.description,
+    examples: typeof dbProblem.examples === "string" ? JSON.parse(dbProblem.examples) : dbProblem.examples,
+    testCases: typeof dbProblem.testCases === "string" ? JSON.parse(dbProblem.testCases) : dbProblem.testCases,
+    starterCode: dbProblem.starterCode,
+  };
+}
 
 function updateLeaderboard(roomId: string) {
   const room = rooms.get(roomId);
@@ -144,59 +176,54 @@ io.on("connection", (socket) => {
     const room = rooms.get(roomId);
     if (!room || room.status !== "waiting") return;
 
-    try {
-      const where: any = {};
-      if (category && category !== "all") where.category = category;
-      if (difficulty && difficulty !== "all") where.difficulty = difficulty;
-      const problemCount = await prisma.problem.count({ where });
-      if (problemCount === 0) {
-        console.error(`No problems found for category=${category || "all"} difficulty=${difficulty || "all"}`);
-        return;
-      }
-      const skip = Math.floor(Math.random() * problemCount);
-      const dbProblem = await prisma.problem.findFirst({ where, skip });
-      if (!dbProblem) {
-        console.error("Failed to fetch a problem from database");
-        return;
-      }
-      room.problem = {
-        id: dbProblem.id,
-        title: dbProblem.title,
-        difficulty: dbProblem.difficulty,
-        category: dbProblem.category,
-        description: dbProblem.description,
-        examples: typeof dbProblem.examples === "string" ? JSON.parse(dbProblem.examples) : dbProblem.examples,
-        testCases: typeof dbProblem.testCases === "string" ? JSON.parse(dbProblem.testCases) : dbProblem.testCases,
-        starterCode: dbProblem.starterCode,
-      };
-    } catch (err) {
-      console.error("Error fetching problem:", err);
+    const problem = await fetchRandomProblem(category, difficulty);
+    if (!problem) {
+      console.error(`No problems found for category=${category || "all"} difficulty=${difficulty || "all"}`);
       return;
     }
+    room.problem = problem;
 
-    room.status = "playing";
-    room.timeRemaining = 600;
+    startCountdown(roomId);
+  });
 
-    io.to(roomId).emit("game-start", {
-      problem: room.problem,
-      timeLimit: room.timeRemaining,
-    });
+  function startCountdown(roomId: string) {
+    const room = rooms.get(roomId);
+    if (!room) return;
+    room.status = "countdown";
+    let count = 3;
+    io.to(roomId).emit("countdown", { count });
 
     room.timer = setInterval(() => {
-      room.timeRemaining--;
-      io.to(roomId).emit("timer-tick", room.timeRemaining);
-
-      if (room.timeRemaining <= 0) {
+      count--;
+      if (count > 0) {
+        io.to(roomId).emit("countdown", { count });
+      } else {
         clearInterval(room.timer!);
         room.timer = null;
-        room.status = "finished";
-        updateLeaderboard(roomId);
-        io.to(roomId).emit("game-over", {
-          players: Array.from(room.players.values()),
+        room.status = "playing";
+        room.timeRemaining = 600;
+        io.to(roomId).emit("game-start", {
+          problem: room.problem,
+          timeLimit: room.timeRemaining,
         });
+
+        room.timer = setInterval(() => {
+          room.timeRemaining--;
+          io.to(roomId).emit("timer-tick", room.timeRemaining);
+
+          if (room.timeRemaining <= 0) {
+            clearInterval(room.timer!);
+            room.timer = null;
+            room.status = "finished";
+            updateLeaderboard(roomId);
+            io.to(roomId).emit("game-over", {
+              players: Array.from(room.players.values()),
+            });
+          }
+        }, 1000);
       }
     }, 1000);
-  });
+  }
 
   socket.on("chat-message", ({ roomId, text }) => {
     if (!roomId || !text) return;
@@ -222,7 +249,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("submit-code", async ({ roomId, code }) => {
+  socket.on("submit-code", async ({ roomId, code, userId }) => {
     if (!roomId) return;
     const room = rooms.get(roomId);
     if (!room || room.status !== "playing") return;
@@ -235,8 +262,18 @@ io.on("connection", (socket) => {
       player.solved = true;
       player.score += 200;
       io.to(roomId).emit("score-update", { userId: socket.id, score: player.score });
+      if (userId && room.problem?.id) {
+        try {
+          await prisma.submission.create({
+            data: { userId, problemId: room.problem.id, roomId, code, language: room.problem.category ?? "javascript", passed: true, score: 200 },
+          });
+        } catch (err) { console.error("Failed to save submission:", err); }
+      }
     } else {
-      const result = await runTestCases(code, testCases);
+      const category = room.problem?.category ?? "javascript";
+      const result = category === "html" || category === "css"
+        ? runMarkupTestCases(code, testCases, category)
+        : await runTestCases(code, testCases);
 
       socket.emit("test-results", result);
 
@@ -258,6 +295,24 @@ io.on("connection", (socket) => {
           name: "System",
           text: `${player.name} solved the problem!`,
         });
+
+        if (userId && room.problem?.id) {
+          try {
+            await prisma.submission.create({
+              data: { userId, problemId: room.problem.id, roomId, code, language: room.problem.category ?? "javascript", passed: true, score },
+            });
+          } catch (err) { console.error("Failed to save submission:", err); }
+        }
+      } else if (userId && room.problem?.id) {
+        try {
+          await prisma.submission.create({
+            data: {
+              userId, problemId: room.problem.id, roomId, code, language: room.problem.category ?? "javascript",
+              passed: false, score: 0,
+              output: (result.results.find((r) => !r.passed)?.actual ?? "").slice(0, 500),
+            },
+          });
+        } catch (err) { console.error("Failed to save submission:", err); }
       }
     }
 
@@ -316,6 +371,96 @@ io.on("connection", (socket) => {
     } catch { callback?.({ error: "Failed to start practice" }); }
   });
 
+  socket.on("quick-match", ({ name }, callback) => {
+    matchQueue = matchQueue.filter((q) => q.socketId !== socket.id);
+    matchQueue.push({ socketId: socket.id, name: name || `Player_${socket.id.slice(0, 4)}` });
+    socket.emit("matchmaking-status", { searching: true, queueSize: matchQueue.length });
+    callback?.({ queued: true });
+    io.emit("matchmaking-queue", matchQueue.length);
+
+    if (matchQueue.length >= 2) {
+      const [a, b] = matchQueue.splice(0, 2);
+      const aSocket = io.sockets.sockets.get(a.socketId);
+      const bSocket = io.sockets.sockets.get(b.socketId);
+      if (!aSocket || !bSocket) {
+        if (aSocket) matchQueue.push(a);
+        if (bSocket) matchQueue.push(b);
+        return;
+      }
+
+      const code = generateRoomCode();
+      const roomId = `quick-${code}-${Date.now()}`;
+      const room: {
+        code: string;
+        players: Map<string, any>;
+        spectators: Set<string>;
+        problem: any;
+        status: string;
+        timeRemaining: number;
+        timer: NodeJS.Timeout | null;
+      } = {
+        code,
+        players: new Map<string, any>(),
+        spectators: new Set<string>(),
+        problem: null,
+        status: "waiting",
+        timeRemaining: 0,
+        timer: null,
+      };
+      rooms.set(roomId, room);
+
+      room.players.set(a.socketId, {
+        userId: a.socketId, name: a.name, image: null, score: 0, solved: false, color: "#ef4444",
+      });
+      room.players.set(b.socketId, {
+        userId: b.socketId, name: b.name, image: null, score: 0, solved: false, color: "#3b82f6",
+      });
+      aSocket.join(roomId);
+      bSocket.join(roomId);
+      io.to(roomId).emit("match-found", { roomId });
+
+      (async () => {
+        const problem = await fetchRandomProblem();
+        if (!problem) return;
+        room.problem = problem;
+        startCountdown(roomId);
+      })();
+    }
+  });
+
+  socket.on("cancel-match", () => {
+    matchQueue = matchQueue.filter((q) => q.socketId !== socket.id);
+    socket.emit("matchmaking-status", { searching: false, queueSize: matchQueue.length });
+    io.emit("matchmaking-queue", matchQueue.length);
+  });
+
+  socket.on("get-submissions", async ({ userId }, callback) => {
+    if (!userId) { callback?.({ error: "Not signed in" }); return; }
+    try {
+      const subs = await prisma.submission.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      });
+      const ids = [...new Set(subs.map((s) => s.problemId))];
+      const problems = await prisma.problem.findMany({ where: { id: { in: ids } } });
+      const problemMap = new Map(problems.map((p) => [p.id, p]));
+      callback?.(subs.map((s) => ({
+        id: s.id,
+        problemId: s.problemId,
+        title: problemMap.get(s.problemId)?.title ?? "Unknown",
+        difficulty: problemMap.get(s.problemId)?.difficulty ?? "",
+        category: problemMap.get(s.problemId)?.category ?? "",
+        code: s.code,
+        language: s.language,
+        passed: s.passed,
+        score: s.score,
+        output: s.output,
+        createdAt: s.createdAt,
+      })));
+    } catch { callback?.([]); }
+  });
+
   socket.on("forfeit", ({ roomId }) => {
     if (!roomId) return;
     const room = rooms.get(roomId);
@@ -345,6 +490,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    matchQueue = matchQueue.filter((q) => q.socketId !== socket.id);
+    io.emit("matchmaking-queue", matchQueue.length);
     for (const [roomId, room] of rooms) {
       if (room.players.has(socket.id)) {
         room.players.delete(socket.id);

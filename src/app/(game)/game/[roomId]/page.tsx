@@ -2,6 +2,7 @@
 
 import { use, useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useSocket } from "@/lib/socket";
 import { useGameStore } from "@/store/gameStore";
 import { Editor } from "@/components/Editor";
@@ -19,9 +20,10 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
   useSocket(roomId);
 
   const router = useRouter();
+  const { data: session } = useSession();
   const {
     code, setCode, status, problem, myUserId, players, myName,
-    connecting, testResults, submitting, setSubmitting, reset,
+    connecting, testResults, submitting, setSubmitting, reset, countdown,
   } = useGameStore();
   const isHost = players[0]?.userId === myUserId;
   const [copied, setCopied] = useState(false);
@@ -31,8 +33,8 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
   const handleSubmit = useCallback(() => {
     setSubmitting(true);
     playSubmit();
-    getSocket().emit("submit-code", { roomId, code });
-  }, [roomId, code, setSubmitting]);
+    getSocket().emit("submit-code", { roomId, code, userId: session?.user?.id });
+  }, [roomId, code, setSubmitting, session?.user?.id]);
 
   const handleStartGame = useCallback(() => {
     getSocket().emit("start-game", { roomId, category, difficulty });
@@ -68,6 +70,22 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
 
   const roomCode = roomId.split("-")[0];
 
+  if (countdown > 0) {
+    return (
+      <div className="h-screen bg-black flex flex-col items-center justify-center">
+        <p className="text-zinc-500 text-sm mb-8 tracking-widest uppercase">Get Ready</p>
+        <div
+          key={countdown}
+          className="text-8xl font-bold text-white animate-[countdown_1s_ease-in-out]"
+          style={{ textShadow: "0 0 40px rgba(59,130,246,0.6)" }}
+        >
+          {countdown}
+        </div>
+        <p className="text-zinc-600 text-xs mt-8">The problem will be revealed soon...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen bg-black flex flex-col">
       <header className="flex items-center justify-between px-4 py-2 bg-zinc-900/80 border-b border-zinc-800 backdrop-blur-sm">
@@ -89,10 +107,11 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
           </button>
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
             status === "waiting" ? "bg-yellow-900/50 text-yellow-400 border border-yellow-700/50" :
+            status === "countdown" ? "bg-purple-900/50 text-purple-400 border border-purple-700/50 animate-pulse" :
             status === "playing" ? "bg-green-900/50 text-green-400 border border-green-700/50 animate-pulse" :
             "bg-zinc-800 text-zinc-400 border border-zinc-700"
           }`}>
-            {status === "waiting" ? "Waiting" : status === "playing" ? "Live" : "Finished"}
+            {status === "waiting" ? "Waiting" : status === "countdown" ? "Starting" : status === "playing" ? "Live" : "Finished"}
           </span>
           {status === "waiting" && isHost && players.length >= 1 && (
             <>
@@ -163,7 +182,12 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
           </div>
           {!isSpectator && (
             <div className="w-full lg:w-1/2 min-w-0 h-64 lg:h-auto rounded-lg overflow-hidden border border-zinc-800">
-              <Editor value={code} onChange={setCode} language="javascript" readOnly={status !== "playing"} />
+              <Editor
+                value={code}
+                onChange={setCode}
+                language={problem?.category === "html" ? "html" : problem?.category === "css" ? "css" : "javascript"}
+                readOnly={status !== "playing"}
+              />
             </div>
           )}
         </div>
