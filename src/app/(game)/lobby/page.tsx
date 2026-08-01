@@ -17,10 +17,13 @@ export default function LobbyPage() {
   const [matching, setMatching] = useState(false);
   const [name, setName] = useState(myName || "");
 
-  const getPlayerName = () => name.trim() || `Player_${Math.random().toString(36).slice(2, 6)}`;
+  const sessionName = session?.user?.name?.trim();
+  const getPlayerName = () =>
+    sessionName || name.trim() || `Player_${Math.random().toString(36).slice(2, 6)}`;
+  const canPlay = !!session?.user || !!name.trim();
 
   const startQuickMatch = () => {
-    if (!name.trim()) return;
+    if (!session?.user && !name.trim()) return;
     setMatching(true);
     const socket = getSocket();
     if (!socket.connected) socket.connect();
@@ -49,7 +52,7 @@ export default function LobbyPage() {
   };
 
   const createRoom = () => {
-    if (!name.trim()) return;
+    if (!session?.user && !name.trim()) return;
     setLoading(true);
     const socket = getSocket();
     if (!socket.connected) socket.connect();
@@ -65,7 +68,7 @@ export default function LobbyPage() {
   };
 
   const joinRoom = () => {
-    if (!joinCode.trim() || !name.trim()) return;
+    if (!joinCode.trim() || (!session?.user && !name.trim())) return;
     setLoading(true);
     const socket = getSocket();
     if (!socket.connected) socket.connect();
@@ -99,20 +102,36 @@ export default function LobbyPage() {
         </div>
 
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 space-y-5">
-          <div>
-            <label className="block text-sm text-zinc-400 mb-1.5">Your Name</label>
-            <input
-              className="w-full bg-zinc-800 text-white rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="Enter your name"
-              maxLength={20}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
+          {session?.user ? (
+            <div className="flex items-center gap-3 bg-zinc-800/60 border border-zinc-800 rounded-lg px-4 py-2.5">
+              {session.user.image ? (
+                <img src={session.user.image} alt="" className="w-6 h-6 rounded-full ring-1 ring-zinc-700" />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                  {sessionName?.[0]?.toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-sm text-white truncate">{session.user.name}</p>
+                <p className="text-xs text-zinc-500">Playing as your username</p>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm text-zinc-400 mb-1.5">Your Name</label>
+              <input
+                className="w-full bg-zinc-800 text-white rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                placeholder="Enter your name"
+                maxLength={20}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+          )}
 
           <button
             onClick={createRoom}
-            disabled={loading || !name.trim()}
+            disabled={loading || !canPlay}
             className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white rounded-lg font-medium transition-all"
           >
             {loading ? "Creating..." : "Create New Room"}
@@ -138,7 +157,7 @@ export default function LobbyPage() {
           ) : (
             <button
               onClick={startQuickMatch}
-              disabled={loading || !name.trim()}
+              disabled={loading || !canPlay}
               className="w-full py-3 bg-gradient-to-r from-purple-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 text-white rounded-lg font-medium transition-all"
             >
               Quick Play
@@ -166,7 +185,7 @@ export default function LobbyPage() {
             {error && <p className="text-red-400 text-sm text-center">{error}</p>}
             <button
               onClick={joinRoom}
-              disabled={loading || !joinCode.trim() || !name.trim()}
+              disabled={loading || !joinCode.trim() || !canPlay}
               className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white rounded-lg font-medium transition-all"
             >
               Join Room
