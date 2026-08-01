@@ -1,21 +1,19 @@
 import "dotenv/config";
 import { createServer } from "http";
+import next from "next";
 import { Server } from "socket.io";
 import { PrismaClient } from "./src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { runTestCases, runMarkupTestCases } from "./src/lib/piston";
 
+const dev = process.env.NODE_ENV !== "production";
+const port = parseInt(process.env.PORT ?? "3000", 10);
+
+const nextApp = next({ dev });
+const handle = nextApp.getRequestHandler();
+
 const prismaAdapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter: prismaAdapter });
-
-const httpServer = createServer();
-
-const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
-    methods: ["GET", "POST"],
-  },
-});
 
 const rooms = new Map<string, {
   code: string;
@@ -73,7 +71,15 @@ function updateLeaderboard(roomId: string) {
   if (leaderboard.length > 100) leaderboard.length = 100;
 }
 
-io.on("connection", (socket) => {
+function setupSocketServer(httpServer: import("http").Server) {
+  const io = new Server(httpServer, {
+    cors: {
+      origin: process.env.CORS_ORIGIN ?? true,
+      methods: ["GET", "POST"],
+    },
+  });
+
+  io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
   socket.on("create-room", ({ code, name }, callback) => {
@@ -505,9 +511,17 @@ io.on("connection", (socket) => {
       }
     }
   });
-});
+  });
 
-const SOCKET_PORT = parseInt(process.env.SOCKET_PORT ?? "3002", 10);
-httpServer.listen(SOCKET_PORT, () => {
-  console.log(`> Socket.io server ready on http://localhost:${SOCKET_PORT}`);
+  return io;
+}
+
+nextApp.prepare().then(() => {
+  const httpServer = createServer((req, res) => {
+    handle(req, res);
+  });
+  setupSocketServer(httpServer);
+  httpServer.listen(port, () => {
+    console.log(`> CodeArena ready on http://localhost:${port} [${dev ? "dev" : "production"}]`);
+  });
 });
