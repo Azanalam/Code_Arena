@@ -21,7 +21,7 @@ export function Hero({ user }: HeroProps) {
 
         <div className="grid grid-cols-3 gap-3 text-center">
           {[
-            { label: "Problems", value: "10+" },
+            { label: "Problems", value: "30+" },
             { label: "Players", value: "2-4" },
             { label: "Timer", value: "10min" },
           ].map((stat) => (

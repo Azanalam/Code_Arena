@@ -466,6 +466,109 @@ const problems = [
     ]),
     starterCode: `.badge {\n\n}`,
   },
+  {
+    title: "Product of Array Except Self",
+    slug: "product-except-self",
+    difficulty: "medium",
+    category: "javascript",
+    description: `<p>Given an integer array <code>nums</code>, return an array <code>answer</code> such that <code>answer[i]</code> is equal to the product of all the elements of <code>nums</code> except <code>nums[i]</code>.</p><p>Solve it in O(n) time without using the division operation.</p>`,
+    examples: JSON.stringify([
+      { input: "nums = [1,2,3,4]", output: "[24,12,8,6]" },
+      { input: "nums = [-1,1,0,-3,3]", output: "[0,0,9,0,0]" },
+    ]),
+    testCases: JSON.stringify([
+      { input: "[[1,2,3,4]]", expected: "[24,12,8,6]" },
+      { input: "[[-1,1,0,-3,3]]", expected: "[0,0,9,0,0]" },
+    ]),
+    starterCode: `function main(nums) {\n  // Your code here\n}`,
+  },
+  {
+    title: "Trapping Rain Water",
+    slug: "trapping-rain-water",
+    difficulty: "hard",
+    category: "javascript",
+    description: `<p>Given <code>n</code> non-negative integers representing an elevation map where the width of each bar is <code>1</code>, compute how much water it can trap after raining.</p>`,
+    examples: JSON.stringify([
+      { input: "height = [0,1,0,2,1,0,1,3,2,1,2,1]", output: "6", explanation: "The above elevation map is represented by array [0,1,0,2,1,0,1,3,2,1,2,1]. In this case, 6 units of rain water are being trapped." },
+      { input: "height = [4,2,0,3,2,5]", output: "9" },
+    ]),
+    testCases: JSON.stringify([
+      { input: "[[0,1,0,2,1,0,1,3,2,1,2,1]]", expected: "6" },
+      { input: "[[4,2,0,3,2,5]]", expected: "9" },
+      { input: "[[1,1,1]]", expected: "0" },
+    ]),
+    starterCode: `function main(height) {\n  // Your code here\n}`,
+  },
+  {
+    title: "Longest Increasing Subsequence",
+    slug: "longest-increasing-subsequence",
+    difficulty: "hard",
+    category: "javascript",
+    description: `<p>Given an integer array <code>nums</code>, return the length of the longest strictly increasing subsequence.</p>`,
+    examples: JSON.stringify([
+      { input: "nums = [10,9,2,5,3,7,101,18]", output: "4", explanation: "The longest increasing subsequence is [2,3,7,101], therefore the length is 4." },
+      { input: "nums = [0,1,0,3,2,3]", output: "4" },
+      { input: "nums = [7,7,7,7,7]", output: "1" },
+    ]),
+    testCases: JSON.stringify([
+      { input: "[[10,9,2,5,3,7,101,18]]", expected: "4" },
+      { input: "[[0,1,0,3,2,3]]", expected: "4" },
+      { input: "[[7,7,7,7,7]]", expected: "1" },
+    ]),
+    starterCode: `function main(nums) {\n  // Your code here\n}`,
+  },
+  {
+    title: "Sliding Window Maximum",
+    slug: "sliding-window-maximum",
+    difficulty: "hard",
+    category: "javascript",
+    description: `<p>You are given an array of integers <code>nums</code>, there is a sliding window of size <code>k</code> which is moving from the very left of the array to the very right. You can only see the <code>k</code> numbers in the window.</p><p>Return the max sliding window, an array containing the maximum of each window.</p>`,
+    examples: JSON.stringify([
+      { input: "nums = [1,3,-1,-3,5,3,6,7], k = 3", output: "[3,3,5,5,6,7]" },
+      { input: "nums = [1], k = 1", output: "[1]" },
+    ]),
+    testCases: JSON.stringify([
+      { input: "[[1,3,-1,-3,5,3,6,7],3]", expected: "[3,3,5,5,6,7]" },
+      { input: "[[1],1]", expected: "[1]" },
+      { input: "[[9,11],2]", expected: "[11]" },
+    ]),
+    starterCode: `function main(nums, k) {\n  // Your code here\n}`,
+  },
+  {
+    title: "HTML Table",
+    slug: "html-table",
+    difficulty: "hard",
+    category: "html",
+    description: `<p>Write raw HTML markup for a table with a header row containing <code>Name</code> and <code>Age</code>, plus a data row with <code>Alice</code> and <code>25</code>.</p>`,
+    examples: JSON.stringify([
+      { input: "no input", output: `<table><tr><th>Name</th><th>Age</th></tr><tr><td>Alice</td><td>25</td></tr></table>` },
+    ]),
+    testCases: JSON.stringify([
+      { input: "[]", expected: "<table>" },
+      { input: "[]", expected: "<th>Name</th>" },
+      { input: "[]", expected: "Alice" },
+      { input: "[]", expected: "25" },
+      { input: "[]", expected: "</table>" },
+    ]),
+    starterCode: `<table></table>`,
+  },
+  {
+    title: "CSS Media Query",
+    slug: "css-media-query",
+    difficulty: "hard",
+    category: "css",
+    description: `<p>Write a raw CSS media query for screens with a maximum width of <code>600px</code> that makes the <code>.container</code> width <code>100%</code>.</p><p>The CSS must include:</p><ul><li>A media query: <code>@media (max-width: 600px)</code></li><li>A rule for <code>.container</code></li><li>Width: <code>100%</code></li></ul>`,
+    examples: JSON.stringify([
+      { input: "no input", output: "@media (max-width: 600px) { .container { width: 100%; } }" },
+    ]),
+    testCases: JSON.stringify([
+      { input: "[]", expected: "@media" },
+      { input: "[]", expected: "max-width: 600px" },
+      { input: "[]", expected: ".container" },
+      { input: "[]", expected: "width: 100%" },
+    ]),
+    starterCode: `@media (max-width: 600px) {\n  .container {\n\n  }\n}`,
+  },
 ];
 
 async function main() {

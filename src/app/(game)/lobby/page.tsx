@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { getSocket } from "@/lib/socket";
 import { useGameStore } from "@/store/gameStore";
-import { generateRoomCode } from "@/lib/gameLogic";
+import { generateRoomCode, getPlayerId } from "@/lib/gameLogic";
 
 export default function LobbyPage() {
   const router = useRouter();
@@ -28,18 +28,18 @@ export default function LobbyPage() {
     const socket = getSocket();
     if (!socket.connected) socket.connect();
     const playerName = getPlayerName();
+    const myUserId = getPlayerId();
+    setMyUserId(myUserId);
+    setMyName(playerName);
 
-    socket.emit("quick-match", { name: playerName }, (res: { queued: boolean } | { error: string }) => {
+    socket.emit("quick-match", { name: playerName, userId: myUserId }, (res: { queued: boolean } | { error: string }) => {
       if ("error" in res) {
         setMatching(false);
         return;
       }
-      const myUserId = socket.id ?? "";
       socket.on("match-found", (data: { roomId: string }) => {
         socket.off("match-found");
         setRoomId(data.roomId);
-        setMyUserId(myUserId);
-        setMyName(playerName);
         setMatching(false);
         router.push(`/game/${data.roomId}`);
       });
@@ -59,7 +59,7 @@ export default function LobbyPage() {
 
     const code = generateRoomCode();
     const playerName = getPlayerName();
-    socket.emit("create-room", { code, name: playerName }, (response: { roomId: string; userId: string }) => {
+    socket.emit("create-room", { code, name: playerName, userId: getPlayerId() }, (response: { roomId: string; userId: string }) => {
       setRoomId(response.roomId);
       setMyUserId(response.userId);
       setMyName(playerName);
@@ -76,7 +76,7 @@ export default function LobbyPage() {
     const playerName = getPlayerName();
     socket.emit(
       "join-room",
-      { code: joinCode.trim().toUpperCase(), name: playerName },
+      { code: joinCode.trim().toUpperCase(), name: playerName, userId: getPlayerId() },
       (response: { roomId: string; userId: string } | { error: string }) => {
         if ("error" in response) {
           setError(response.error);

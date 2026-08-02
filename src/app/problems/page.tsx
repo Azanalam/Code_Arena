@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socket";
+import { getPlayerId } from "@/lib/gameLogic";
 
 interface ProblemSummary {
   id: string;
@@ -22,7 +23,7 @@ export default function ProblemsPage() {
     const s = getSocket();
     if (!s.connected) s.connect();
     const onConnect = () => {
-      s.emit("get-problems", (data: ProblemSummary[]) => {
+      s.emit("get-problems", {}, (data: ProblemSummary[]) => {
         setProblems(data);
         setLoading(false);
       });
@@ -34,7 +35,7 @@ export default function ProblemsPage() {
 
   const startPractice = (slug: string) => {
     const s = getSocket();
-    s.emit("practice-start", { slug }, (res: { roomId: string } | { error: string }) => {
+    s.emit("practice-start", { slug, userId: getPlayerId() }, (res: { roomId: string } | { error: string }) => {
       if ("error" in res) return;
       router.push(`/game/${res.roomId}`);
     });

@@ -23,11 +23,10 @@ const rooms = new Map<string, {
   status: string;
   timeRemaining: number;
   timer: NodeJS.Timeout | null;
+  cleanupTimer: NodeJS.Timeout | null;
 }>();
 
-const leaderboard: { name: string; score: number; date: number }[] = [];
-
-let matchQueue: { socketId: string; name: string }[] = [];
+let matchQueue: { socketId: string; name: string; userId: string }[] = [];
 
 function generateRoomCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -59,16 +58,20 @@ async function fetchRandomProblem(category?: string, difficulty?: string) {
   };
 }
 
-function updateLeaderboard(roomId: string) {
+async function updateLeaderboard(roomId: string) {
   const room = rooms.get(roomId);
   if (!room) return;
   for (const p of room.players.values()) {
     if (p.score > 0) {
-      leaderboard.push({ name: p.name, score: p.score, date: Date.now() });
+      try {
+        await prisma.leaderboardEntry.create({
+          data: { name: p.name, score: p.score, userId: p.userId ?? null, roomId },
+        });
+      } catch (err) {
+        console.error("Failed to save leaderboard entry:", err);
+      }
     }
   }
-  leaderboard.sort((a, b) => b.score - a.score);
-  if (leaderboard.length > 100) leaderboard.length = 100;
 }
 
 function setupSocketServer(httpServer: import("http").Server) {
@@ -82,8 +85,10 @@ function setupSocketServer(httpServer: import("http").Server) {
   io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
-  socket.on("create-room", ({ code, name }, callback) => {
+  socket.on("create-room", ({ code, name, userId }, callback) => {
     const roomId = `${code}-${Date.now()}`;
+    const uid = userId || socket.id;
+    socket.data.userId = uid;
     rooms.set(roomId, {
       code,
       players: new Map(),
@@ -92,17 +97,20 @@ function setupSocketServer(httpServer: import("http").Server) {
       status: "waiting",
       timeRemaining: 0,
       timer: null,
+      cleanupTimer: null,
     });
 
     const player = {
-      userId: socket.id,
-      name: name || `Player_${socket.id.slice(0, 4)}`,
+      userId: uid,
+      socketId: socket.id,
+      connected: true,
+      name: name || `Player_${uid.slice(0, 4)}`,
       image: null,
       score: 0,
       solved: false,
       color: "#3b82f6",
     };
-    rooms.get(roomId)!.players.set(socket.id, player);
+    rooms.get(roomId)!.players.set(uid, player);
 
     socket.join(roomId);
     socket.emit("room-state", {
@@ -110,12 +118,13 @@ function setupSocketServer(httpServer: import("http").Server) {
       problem: null,
       status: "waiting",
       timeRemaining: 0,
+      userId: uid,
     });
 
-    callback({ roomId, userId: socket.id });
+    callback({ roomId, userId: uid });
   });
 
-  socket.on("join-room", ({ code, roomId: existingRoomId, name }, callback) => {
+  socket.on("join-room", ({ code, roomId: existingRoomId, name, userId }, callback) => {
     let roomId = existingRoomId;
     if (!roomId) {
       for (const [id, room] of rooms) {
@@ -132,28 +141,41 @@ function setupSocketServer(httpServer: import("http").Server) {
     }
 
     const room = rooms.get(roomId)!;
-    if (room.players.size >= 4) {
-      callback?.({ error: "Room is full" });
-      return;
-    }
+    const uid = userId || socket.id;
+    socket.data.userId = uid;
+    const existingPlayer = room.players.get(uid);
+    const isReconnect = !!existingPlayer;
 
-    const existingPlayer = room.players.get(socket.id);
     if (!existingPlayer) {
+      if (room.players.size >= 4) {
+        callback?.({ error: "Room is full" });
+        return;
+      }
       const player = {
-        userId: socket.id,
-        name: name || `Player_${socket.id.slice(0, 4)}`,
+        userId: uid,
+        socketId: socket.id,
+        connected: true,
+        name: name || `Player_${uid.slice(0, 4)}`,
         image: null,
         score: 0,
         solved: false,
         color: "#3b82f6",
       };
-      room.players.set(socket.id, player);
+      room.players.set(uid, player);
+    } else {
+      existingPlayer.socketId = socket.id;
+      existingPlayer.connected = true;
+    }
+
+    if (room.cleanupTimer) {
+      clearTimeout(room.cleanupTimer);
+      room.cleanupTimer = null;
     }
 
     socket.join(roomId);
 
     const playersArr = Array.from(room.players.values());
-    if (!existingPlayer) {
+    if (!isReconnect) {
       io.to(roomId).emit("player-joined", playersArr[playersArr.length - 1]);
     }
     socket.emit("room-state", {
@@ -161,9 +183,11 @@ function setupSocketServer(httpServer: import("http").Server) {
       problem: room.problem,
       status: room.status,
       timeRemaining: room.timeRemaining,
+      userId: uid,
+      reconnected: isReconnect,
     });
 
-    callback?.({ roomId, userId: socket.id });
+    callback?.({ roomId, userId: uid });
   });
 
   socket.on("spectate-room", ({ roomId: existingRoomId }, callback) => {
@@ -234,9 +258,9 @@ function setupSocketServer(httpServer: import("http").Server) {
   socket.on("chat-message", ({ roomId, text }) => {
     if (!roomId || !text) return;
     const playerName = Array.from(rooms.get(roomId)?.players.values() ?? [])
-      .find((p) => p.userId === socket.id)?.name ?? "Unknown";
+      .find((p) => p.userId === socket.data.userId)?.name ?? "Unknown";
     io.to(roomId).emit("chat-message", {
-      userId: socket.id,
+      userId: socket.data.userId,
       name: playerName,
       text,
     });
@@ -244,7 +268,7 @@ function setupSocketServer(httpServer: import("http").Server) {
 
   socket.on("request-hint", () => {
     for (const [roomId, room] of rooms) {
-      if (room.players.has(socket.id)) {
+      if (room.players.has(socket.data.userId)) {
         socket.emit("ai-hint", {
           userId: "ai",
           name: "AI Mentor",
@@ -260,14 +284,14 @@ function setupSocketServer(httpServer: import("http").Server) {
     const room = rooms.get(roomId);
     if (!room || room.status !== "playing") return;
 
-    const player = room.players.get(socket.id);
+    const player = room.players.get(socket.data.userId);
     if (!player || player.solved) return;
 
     const testCases = room.problem?.testCases ?? [];
     if (testCases.length === 0) {
       player.solved = true;
       player.score += 200;
-      io.to(roomId).emit("score-update", { userId: socket.id, score: player.score });
+      io.to(roomId).emit("score-update", { userId: socket.data.userId, score: player.score });
       if (userId && room.problem?.id) {
         try {
           await prisma.submission.create({
@@ -295,7 +319,7 @@ function setupSocketServer(httpServer: import("http").Server) {
           500 + Math.max(0, Math.floor((1 - timeSpent / 600) * 500));
 
         player.score += score;
-        io.to(roomId).emit("score-update", { userId: socket.id, score: player.score });
+        io.to(roomId).emit("score-update", { userId: socket.data.userId, score: player.score });
         io.to(roomId).emit("chat-message", {
           userId: "system",
           name: "System",
@@ -334,8 +358,17 @@ function setupSocketServer(httpServer: import("http").Server) {
     }
   });
 
-  socket.on("get-leaderboard", (_, callback) => {
-    if (typeof callback === "function") callback([...leaderboard]);
+  socket.on("get-leaderboard", async (_, callback) => {
+    try {
+      const entries = await prisma.leaderboardEntry.findMany({
+        orderBy: [{ score: "desc" }, { createdAt: "asc" }],
+        take: 100,
+      });
+      callback?.(entries.map((e) => ({ name: e.name, score: e.score, date: e.createdAt.getTime() })));
+    } catch (err) {
+      console.error("Failed to fetch leaderboard:", err);
+      callback?.([]);
+    }
   });
 
   socket.on("get-problems", async (_, callback) => {
@@ -345,14 +378,18 @@ function setupSocketServer(httpServer: import("http").Server) {
         id: p.id, title: p.title, slug: p.slug,
         difficulty: p.difficulty, category: p.category,
       })));
-    } catch { callback?.([]); }
+    } catch {
+      callback?.([]);
+    }
   });
 
-  socket.on("practice-start", async ({ slug }, callback) => {
+  socket.on("practice-start", async ({ slug, userId }, callback) => {
     try {
       const dbProblem = await prisma.problem.findUnique({ where: { slug } });
-      if (!dbProblem) { callback?.({ error: "Problem not found" }); return; }
+      if (!dbProblem) return callback?.({ error: "Problem not found" });
       const roomId = `practice-${slug}-${Date.now()}`;
+      const uid = userId || socket.id;
+      socket.data.userId = uid;
       const room = {
         code: roomId,
         players: new Map(),
@@ -367,21 +404,26 @@ function setupSocketServer(httpServer: import("http").Server) {
         status: "playing" as const,
         timeRemaining: 0,
         timer: null,
+        cleanupTimer: null,
       };
       rooms.set(roomId, room);
       socket.join(roomId);
-      room.players.set(socket.id, {
-        userId: socket.id, name: "You", image: null, score: 0, solved: false, color: "#3b82f6",
+      room.players.set(uid, {
+        userId: uid, socketId: socket.id, connected: true, name: "You", image: null, score: 0, solved: false, color: "#3b82f6",
       });
-      callback?.({ roomId });
-    } catch { callback?.({ error: "Failed to start practice" }); }
+      return callback?.({ roomId, userId: uid });
+    } catch {
+      return callback?.({ error: "Failed to start practice" });
+    }
   });
 
-  socket.on("quick-match", ({ name }, callback) => {
+  socket.on("quick-match", ({ name, userId }, callback) => {
+    const uid = userId || socket.id;
+    socket.data.userId = uid;
     matchQueue = matchQueue.filter((q) => q.socketId !== socket.id);
-    matchQueue.push({ socketId: socket.id, name: name || `Player_${socket.id.slice(0, 4)}` });
+    matchQueue.push({ socketId: socket.id, name: name || `Player_${uid.slice(0, 4)}`, userId: uid });
     socket.emit("matchmaking-status", { searching: true, queueSize: matchQueue.length });
-    callback?.({ queued: true });
+    callback?.({ queued: true, userId: uid });
     io.emit("matchmaking-queue", matchQueue.length);
 
     if (matchQueue.length >= 2) {
@@ -394,6 +436,9 @@ function setupSocketServer(httpServer: import("http").Server) {
         return;
       }
 
+      aSocket.data.userId = a.userId;
+      bSocket.data.userId = b.userId;
+
       const code = generateRoomCode();
       const roomId = `quick-${code}-${Date.now()}`;
       const room: {
@@ -404,6 +449,7 @@ function setupSocketServer(httpServer: import("http").Server) {
         status: string;
         timeRemaining: number;
         timer: NodeJS.Timeout | null;
+        cleanupTimer: NodeJS.Timeout | null;
       } = {
         code,
         players: new Map<string, any>(),
@@ -412,14 +458,15 @@ function setupSocketServer(httpServer: import("http").Server) {
         status: "waiting",
         timeRemaining: 0,
         timer: null,
+        cleanupTimer: null,
       };
       rooms.set(roomId, room);
 
-      room.players.set(a.socketId, {
-        userId: a.socketId, name: a.name, image: null, score: 0, solved: false, color: "#ef4444",
+      room.players.set(a.userId, {
+        userId: a.userId, socketId: a.socketId, connected: true, name: a.name, image: null, score: 0, solved: false, color: "#ef4444",
       });
-      room.players.set(b.socketId, {
-        userId: b.socketId, name: b.name, image: null, score: 0, solved: false, color: "#3b82f6",
+      room.players.set(b.userId, {
+        userId: b.userId, socketId: b.socketId, connected: true, name: b.name, image: null, score: 0, solved: false, color: "#3b82f6",
       });
       aSocket.join(roomId);
       bSocket.join(roomId);
@@ -441,7 +488,7 @@ function setupSocketServer(httpServer: import("http").Server) {
   });
 
   socket.on("get-submissions", async ({ userId }, callback) => {
-    if (!userId) { callback?.({ error: "Not signed in" }); return; }
+    if (!userId) return callback?.({ error: "Not signed in" });
     try {
       const subs = await prisma.submission.findMany({
         where: { userId },
@@ -451,7 +498,7 @@ function setupSocketServer(httpServer: import("http").Server) {
       const ids = [...new Set(subs.map((s) => s.problemId))];
       const problems = await prisma.problem.findMany({ where: { id: { in: ids } } });
       const problemMap = new Map(problems.map((p) => [p.id, p]));
-      callback?.(subs.map((s) => ({
+      return subs.map((s) => ({
         id: s.id,
         problemId: s.problemId,
         title: problemMap.get(s.problemId)?.title ?? "Unknown",
@@ -463,20 +510,22 @@ function setupSocketServer(httpServer: import("http").Server) {
         score: s.score,
         output: s.output,
         createdAt: s.createdAt,
-      })));
-    } catch { callback?.([]); }
+      }));
+    } catch {
+      callback?.([]);
+    }
   });
 
   socket.on("forfeit", ({ roomId }) => {
     if (!roomId) return;
     const room = rooms.get(roomId);
     if (!room || room.status !== "playing") return;
-    const player = room.players.get(socket.id);
+    const player = room.players.get(socket.data.userId);
     if (!player || player.solved) return;
 
     player.solved = true;
     player.score = 0;
-    io.to(roomId).emit("score-update", { userId: socket.id, score: 0 });
+    io.to(roomId).emit("score-update", { userId: socket.data.userId, score: 0 });
     io.to(roomId).emit("chat-message", {
       userId: "system",
       name: "System",
@@ -495,17 +544,42 @@ function setupSocketServer(httpServer: import("http").Server) {
     }
   });
 
+  socket.on("leave-room", ({ roomId }) => {
+    const room = rooms.get(roomId);
+    const uid = socket.data?.userId;
+    if (!room || !uid) return;
+    if (room.players.delete(uid)) {
+      io.to(roomId).emit("player-left", uid);
+    }
+    room.spectators.delete(socket.id);
+    if (room.players.size === 0) {
+      clearInterval(room.timer!);
+      if (room.cleanupTimer) clearTimeout(room.cleanupTimer);
+      rooms.delete(roomId);
+    }
+  });
+
   socket.on("disconnect", () => {
     matchQueue = matchQueue.filter((q) => q.socketId !== socket.id);
     io.emit("matchmaking-queue", matchQueue.length);
+    const uid = socket.data?.userId;
     for (const [roomId, room] of rooms) {
-      if (room.players.has(socket.id)) {
-        room.players.delete(socket.id);
-        io.to(roomId).emit("player-left", socket.id);
-
-        if (room.players.size === 0) {
-          clearInterval(room.timer!);
-          rooms.delete(roomId);
+      room.spectators.delete(socket.id);
+      const player = uid ? room.players.get(uid) : null;
+      if (player) {
+        if (player.socketId === socket.id) {
+          player.connected = false;
+        }
+        const anyConnected = Array.from(room.players.values()).some((p) => p.connected);
+        if (!anyConnected) {
+          if (room.cleanupTimer) clearTimeout(room.cleanupTimer);
+          room.cleanupTimer = setTimeout(() => {
+            const roomNow = rooms.get(roomId);
+            if (roomNow && Array.from(roomNow.players.values()).every((p) => !p.connected)) {
+              clearInterval(roomNow.timer!);
+              rooms.delete(roomId);
+            }
+          }, 60_000);
         }
         break;
       }

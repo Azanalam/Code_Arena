@@ -111,3 +111,14 @@ model Submission {
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model LeaderboardEntry {
+  id        String   @id @default(cuid())
+  name      String
+  score     Int
+  userId    String?
+  roomId    String?
+  createdAt DateTime @default(now())
+
+  @@index([score])
+}

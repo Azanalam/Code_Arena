@@ -20,7 +20,7 @@ export default function LeaderboardPage() {
     if (!s.connected) s.connect();
 
     const onConnect = () => {
-      s.emit("get-leaderboard", (data: Entry[]) => {
+      s.emit("get-leaderboard", {}, (data: Entry[]) => {
         setEntries(data);
         setLoading(false);
       });

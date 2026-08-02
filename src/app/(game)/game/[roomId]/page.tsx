@@ -24,12 +24,23 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
   const {
     code, setCode, status, problem, myUserId, players, myName,
     connecting, testResults, submitting, setSubmitting, reset, countdown,
+    setRoomId,
   } = useGameStore();
   const isHost = players[0]?.userId === myUserId;
   const [copied, setCopied] = useState(false);
   const [category, setCategory] = useState("all");
   const [difficulty, setDifficulty] = useState("all");
   const [mobileTab, setMobileTab] = useState<"problem" | "editor" | "players" | "chat">("problem");
+
+  useEffect(() => {
+    setRoomId(roomId);
+  }, [roomId, setRoomId]);
+
+  const leaveRoom = useCallback(() => {
+    getSocket().emit("leave-room", { roomId });
+    reset();
+    router.push("/lobby");
+  }, [roomId, reset, router]);
 
   const handleSubmit = useCallback(() => {
     setSubmitting(true);
@@ -91,7 +102,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     <div className="h-dvh bg-black flex flex-col">
       <header className="flex items-center flex-wrap gap-x-3 gap-y-2 px-3 sm:px-4 py-2 bg-zinc-900/80 border-b border-zinc-800 backdrop-blur-sm">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <button onClick={() => { reset(); router.push("/lobby"); }} className="text-zinc-500 hover:text-white transition-colors">
+          <button onClick={leaveRoom} className="text-zinc-500 hover:text-white transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
           <span className="text-white font-bold text-lg">
@@ -136,6 +147,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
                 <option value="all">All</option>
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
               </select>
               <button onClick={handleStartGame} className="text-xs px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded-md font-medium transition-all">
                 Start Game
@@ -251,10 +263,10 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               ))}
             </div>
             <div className="flex gap-3">
-              <button onClick={() => { reset(); router.push("/lobby"); }} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all">
+              <button onClick={leaveRoom} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all">
                 Play Again
               </button>
-              <button onClick={() => { reset(); router.push("/"); }} className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium transition-all">
+              <button onClick={() => { getSocket().emit("leave-room", { roomId }); reset(); router.push("/"); }} className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium transition-all">
                 Home
               </button>
             </div>

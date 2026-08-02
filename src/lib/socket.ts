@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import { useGameStore } from "@/store/gameStore";
+import { getPlayerId } from "@/lib/gameLogic";
 import { playPass, playFail, playSubmit, playGameOver } from "./sounds";
 
 let socket: Socket | null = null;
@@ -20,7 +21,7 @@ export function useSocket(roomId: string) {
     setPlayers, setProblem, setStatus, setTimeRemaining,
     addChatMessage, addPlayer, removePlayer, updatePlayerScore,
     setConnecting, setTestResults, setSubmitting, updatePlayerSolved,
-    setCode, setCountdown,
+    setCode, setCountdown, setMyUserId,
   } = useGameStore();
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export function useSocket(roomId: string) {
 
     const handleConnect = () => {
       setConnecting(false);
-      s.emit("join-room", { roomId });
+      s.emit("join-room", { roomId, userId: getPlayerId() });
     };
 
     const handleRoomState = (state: any) => {
@@ -38,6 +39,7 @@ export function useSocket(roomId: string) {
       setTimeRemaining(state.timeRemaining);
       setCountdown(0);
       setConnecting(false);
+      if (state.userId) setMyUserId(state.userId);
     };
 
     const handleTestResults = (results: any) => {
@@ -80,7 +82,7 @@ export function useSocket(roomId: string) {
 
     if (s.connected) {
       setConnecting(false);
-      s.emit("join-room", { roomId });
+      s.emit("join-room", { roomId, userId: getPlayerId() });
     } else {
       s.connect();
     }

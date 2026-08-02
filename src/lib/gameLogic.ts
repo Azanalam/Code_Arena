@@ -52,6 +52,16 @@ export function generateRoomCode(): string {
   return code;
 }
 
+export function getPlayerId(): string {
+  if (typeof window === "undefined") return "";
+  let id = window.localStorage.getItem("codearena_player_id");
+  if (!id) {
+    id = crypto.randomUUID();
+    window.localStorage.setItem("codearena_player_id", id);
+  }
+  return id;
+}
+
 export function calculateScore(
   timeSpent: number,
   totalTime: number,

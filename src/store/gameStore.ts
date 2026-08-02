@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { PlayerState, ProblemData } from "@/lib/gameLogic";
+import { getPlayerId } from "@/lib/gameLogic";
 
 export interface ChatMessage {
   userId: string;
@@ -59,7 +60,7 @@ const initialState = {
   timeRemaining: 0,
   code: "",
   chatMessages: [],
-  myUserId: null,
+  myUserId: getPlayerId() || null,
   myName: "",
   testResults: null,
   submitting: false,
@@ -70,12 +71,26 @@ const initialState = {
 export const useGameStore = create<GameStore>((set) => ({
   ...initialState,
 
-  setRoomId: (roomId) => set({ roomId }),
+  setRoomId: (roomId) =>
+    set(() => {
+      let code = "";
+      if (typeof window !== "undefined") {
+        const saved = window.localStorage.getItem(`codearena_code_${roomId}`);
+        if (saved !== null) code = saved;
+      }
+      return { roomId, code };
+    }),
   setPlayers: (players) => set({ players }),
   setProblem: (problem) => set({ problem }),
   setStatus: (status) => set({ status }),
   setTimeRemaining: (timeRemaining) => set({ timeRemaining }),
-  setCode: (code) => set({ code }),
+  setCode: (code) =>
+    set((state) => {
+      if (typeof window !== "undefined" && state.roomId) {
+        window.localStorage.setItem(`codearena_code_${state.roomId}`, code);
+      }
+      return { code };
+    }),
   setMyUserId: (myUserId) => set({ myUserId }),
   setMyName: (myName) => set({ myName }),
   setTestResults: (testResults) => set({ testResults }),
@@ -109,5 +124,11 @@ export const useGameStore = create<GameStore>((set) => ({
     set((state) => ({
       chatMessages: [...state.chatMessages, { ...msg, timestamp: Date.now() }],
     })),
-  reset: () => set(initialState),
+  reset: () =>
+    set((state) => {
+      if (typeof window !== "undefined" && state.roomId) {
+        window.localStorage.removeItem(`codearena_code_${state.roomId}`);
+      }
+      return { ...initialState, myUserId: getPlayerId() || null };
+    }),
 }));
