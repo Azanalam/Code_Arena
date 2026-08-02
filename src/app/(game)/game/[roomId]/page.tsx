@@ -117,25 +117,26 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
           {status === "waiting" && isHost && players.length >= 1 && (
             <div className="w-full flex items-center flex-wrap gap-1.5 pt-1">
               <span className="text-zinc-500 text-xs">Type:</span>
-              {["all", "javascript", "html", "css"].map((c) => (
-                <button key={c} onClick={() => setCategory(c)} className={`text-xs px-2 py-1 rounded font-medium transition-all capitalize ${
-                  category === c
-                    ? "bg-blue-700 text-white"
-                    : "bg-zinc-800 text-zinc-400 hover:text-white"
-                }`}>
-                  {c === "all" ? "All" : c === "javascript" ? "JS" : c.toUpperCase()}
-                </button>
-              ))}
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-md outline-none focus:ring-1 focus:ring-blue-500 border border-zinc-700 cursor-pointer"
+              >
+                <option value="all">All</option>
+                <option value="javascript">JavaScript</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+              </select>
               <span className="text-zinc-500 text-xs">Diff:</span>
-              {["all", "easy", "medium"].map((d) => (
-                <button key={d} onClick={() => setDifficulty(d)} className={`text-xs px-2 py-1 rounded font-medium transition-all capitalize ${
-                  difficulty === d
-                    ? "bg-blue-700 text-white"
-                    : "bg-zinc-800 text-zinc-400 hover:text-white"
-                }`}>
-                  {d === "all" ? "All" : d.charAt(0).toUpperCase() + d.slice(1)}
-                </button>
-              ))}
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+                className="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-md outline-none focus:ring-1 focus:ring-blue-500 border border-zinc-700 cursor-pointer"
+              >
+                <option value="all">All</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+              </select>
               <button onClick={handleStartGame} className="text-xs px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded-md font-medium transition-all">
                 Start Game
               </button>
