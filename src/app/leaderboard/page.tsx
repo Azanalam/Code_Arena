@@ -34,7 +34,7 @@ export default function LeaderboardPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="flex items-center gap-4 px-6 py-4 bg-zinc-900/80 border-b border-zinc-800">
+      <header className="flex items-center gap-4 px-4 sm:px-6 py-4 bg-zinc-900/80 border-b border-zinc-800">
         <button onClick={() => router.push("/lobby")} className="text-zinc-400 hover:text-white transition-colors">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>

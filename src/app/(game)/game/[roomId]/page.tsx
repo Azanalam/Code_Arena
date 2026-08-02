@@ -29,6 +29,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
   const [copied, setCopied] = useState(false);
   const [category, setCategory] = useState("all");
   const [difficulty, setDifficulty] = useState("all");
+  const [mobileTab, setMobileTab] = useState<"problem" | "editor" | "players" | "chat">("problem");
 
   const handleSubmit = useCallback(() => {
     setSubmitting(true);
@@ -59,7 +60,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
 
   if (connecting) {
     return (
-      <div className="h-screen bg-black flex items-center justify-center">
+      <div className="h-dvh bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-zinc-400 text-sm">Connecting to game...</p>
@@ -72,11 +73,11 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
 
   if (countdown > 0) {
     return (
-      <div className="h-screen bg-black flex flex-col items-center justify-center">
+      <div className="h-dvh bg-black flex flex-col items-center justify-center">
         <p className="text-zinc-500 text-sm mb-8 tracking-widest uppercase">Get Ready</p>
         <div
           key={countdown}
-          className="text-8xl font-bold text-white animate-[countdown_1s_ease-in-out]"
+          className="text-7xl sm:text-8xl font-bold text-white animate-[countdown_1s_ease-in-out]"
           style={{ textShadow: "0 0 40px rgba(59,130,246,0.6)" }}
         >
           {countdown}
@@ -87,16 +88,16 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
   }
 
   return (
-    <div className="h-screen bg-black flex flex-col">
-      <header className="flex items-center justify-between px-4 py-2 bg-zinc-900/80 border-b border-zinc-800 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
+    <div className="h-dvh bg-black flex flex-col">
+      <header className="flex items-center flex-wrap gap-x-3 gap-y-2 px-3 sm:px-4 py-2 bg-zinc-900/80 border-b border-zinc-800 backdrop-blur-sm">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <button onClick={() => { reset(); router.push("/lobby"); }} className="text-zinc-500 hover:text-white transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
           <span className="text-white font-bold text-lg">
             Code<span className="text-blue-500">Arena</span>
           </span>
-          <span className="text-zinc-700">|</span>
+          <span className="text-zinc-700 hidden sm:inline">|</span>
           <button onClick={copyRoomCode} className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors text-sm font-mono bg-zinc-800/50 px-2.5 py-1 rounded-md">
             {roomCode}
             {copied ? (
@@ -114,8 +115,8 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
             {status === "waiting" ? "Waiting" : status === "countdown" ? "Starting" : status === "playing" ? "Live" : "Finished"}
           </span>
           {status === "waiting" && isHost && players.length >= 1 && (
-            <>
-              <span className="text-zinc-500 text-xs ml-2">Type:</span>
+            <div className="w-full flex items-center flex-wrap gap-1.5 pt-1">
+              <span className="text-zinc-500 text-xs">Type:</span>
               {["all", "javascript", "html", "css"].map((c) => (
                 <button key={c} onClick={() => setCategory(c)} className={`text-xs px-2 py-1 rounded font-medium transition-all capitalize ${
                   category === c
@@ -125,7 +126,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
                   {c === "all" ? "All" : c === "javascript" ? "JS" : c.toUpperCase()}
                 </button>
               ))}
-              <span className="text-zinc-500 text-xs ml-2">Diff:</span>
+              <span className="text-zinc-500 text-xs">Diff:</span>
               {["all", "easy", "medium"].map((d) => (
                 <button key={d} onClick={() => setDifficulty(d)} className={`text-xs px-2 py-1 rounded font-medium transition-all capitalize ${
                   difficulty === d
@@ -138,10 +139,10 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               <button onClick={handleStartGame} className="text-xs px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded-md font-medium transition-all">
                 Start Game
               </button>
-            </>
+            </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           {status === "playing" && !isSpectator && <AiHint />}
           {status === "playing" && !isSpectator && (
             <>
@@ -166,7 +167,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
         </div>
       </header>
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-2 p-2 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-2 p-2 min-h-0 overflow-hidden">
         <div className="hidden lg:flex w-72 flex-shrink-0 flex-col gap-2">
           <div className="flex-1 min-h-0">
             <Scoreboard />
@@ -176,12 +177,16 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
           </div>
         </div>
 
-        <div className="flex-1 min-w-0 flex flex-col lg:flex-row gap-2">
-          <div className={isSpectator ? "w-full" : "w-full lg:w-1/2 min-w-0"}>
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col lg:flex-row gap-2">
+          <div className={`w-full min-w-0 flex-col min-h-0 ${isSpectator ? "" : "lg:w-1/2"} ${
+            mobileTab === "problem" ? "flex flex-1" : "hidden"
+          } lg:flex lg:flex-1`}>
             <ProblemPanel />
           </div>
           {!isSpectator && (
-            <div className="w-full lg:w-1/2 min-w-0 h-64 lg:h-auto rounded-lg overflow-hidden border border-zinc-800">
+            <div className={`w-full min-w-0 flex-col min-h-0 lg:w-1/2 rounded-lg overflow-hidden border border-zinc-800 ${
+              mobileTab === "editor" ? "flex flex-1" : "hidden"
+            } lg:flex lg:flex-1`}>
               <Editor
                 value={code}
                 onChange={setCode}
@@ -190,7 +195,36 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               />
             </div>
           )}
+          <div className={`min-w-0 flex-col min-h-0 ${mobileTab === "players" ? "flex flex-1" : "hidden"} lg:hidden`}>
+            <Scoreboard />
+          </div>
+          <div className={`min-w-0 flex-col min-h-0 ${mobileTab === "chat" ? "flex flex-1" : "hidden"} lg:hidden`}>
+            <Chat />
+          </div>
         </div>
+      </div>
+
+      <div className="lg:hidden flex border-t border-zinc-800 bg-zinc-900/95 backdrop-blur-sm">
+        {[
+          { key: "problem", label: "Problem" },
+          { key: "editor", label: "Editor" },
+          { key: "players", label: "Score" },
+          { key: "chat", label: "Chat" },
+        ]
+          .filter((t) => !isSpectator || t.key !== "editor")
+          .map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setMobileTab(t.key as "problem" | "editor" | "players" | "chat")}
+              className={`flex-1 py-2.5 text-xs font-medium uppercase tracking-wide transition-colors ${
+                mobileTab === t.key
+                  ? "text-white border-b-2 border-blue-500 bg-blue-900/10"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
       </div>
 
       {status === "finished" && (
@@ -228,7 +262,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
       )}
 
       {testResults && status !== "finished" && (
-        <div className="absolute bottom-4 right-4 w-96 bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-2xl max-h-80 overflow-y-auto">
+        <div className="absolute left-3 right-3 sm:left-auto sm:right-4 sm:w-96 bottom-16 lg:bottom-4 bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-2xl max-h-80 overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-medium text-white">Test Results</h4>
             <span className={`text-xs px-2 py-0.5 rounded-full ${

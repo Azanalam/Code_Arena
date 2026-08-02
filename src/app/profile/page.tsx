@@ -79,7 +79,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <header className="flex items-center gap-4 px-6 py-4 bg-zinc-900/80 border-b border-zinc-800">
+      <header className="flex items-center gap-4 px-4 sm:px-6 py-4 bg-zinc-900/80 border-b border-zinc-800">
         <button onClick={() => router.push("/lobby")} className="text-zinc-400 hover:text-white transition-colors">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
@@ -98,7 +98,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-blue-400">{submissions.length}</div>
             <div className="text-xs text-zinc-500 mt-1">Attempts</div>
@@ -124,10 +124,10 @@ export default function ProfilePage() {
           ) : (
             <div className="space-y-2">
               {submissions.map((s) => (
-                <div key={s.id} className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-3">
+                <div key={s.id} className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-3 min-w-0">
                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${s.passed ? "bg-green-400" : "bg-red-400"}`} />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <span className="font-medium text-sm truncate">{s.title}</span>
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded capitalize ${
                         s.difficulty === "easy" ? "bg-green-900/50 text-green-400" :
