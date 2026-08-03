@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import { useGameStore, type ChatMessage, type TestResult } from "@/store/gameStore";
 import { getPlayerId, type PlayerState, type ProblemData } from "@/lib/gameLogic";
-import { playPass, playFail, playSubmit, playGameOver } from "./sounds";
+import { playPass, playFail, playGameOver } from "./sounds";
 
 let socket: Socket | null = null;
 
@@ -43,7 +43,7 @@ export function useSocket(roomId: string) {
   const {
     setPlayers, setProblem, setStatus, setTimeRemaining,
     addChatMessage, addPlayer, removePlayer, updatePlayerScore,
-    setConnecting, setTestResults, setSubmitting, updatePlayerSolved,
+    setConnecting, setTestResults, setSubmitting,
     setCode, setCountdown, setMyUserId,
   } = useGameStore();
 
@@ -125,7 +125,23 @@ export function useSocket(roomId: string) {
       s.off("ai-hint");
       s.off("test-results", handleTestResults);
     };
-  }, [roomId]);
+  }, [
+    roomId,
+    setPlayers,
+    setProblem,
+    setStatus,
+    setTimeRemaining,
+    setCountdown,
+    setConnecting,
+    setMyUserId,
+    setCode,
+    setSubmitting,
+    setTestResults,
+    addChatMessage,
+    addPlayer,
+    removePlayer,
+    updatePlayerScore,
+  ]);
 
   return { socket: getSocket() };
 }

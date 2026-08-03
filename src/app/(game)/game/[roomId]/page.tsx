@@ -22,7 +22,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
   const router = useRouter();
   const { data: session } = useSession();
   const {
-    code, setCode, status, problem, myUserId, players, myName,
+    code, setCode, status, problem, myUserId, players,
     connecting, testResults, submitting, setSubmitting, reset, countdown,
     setRoomId,
   } = useGameStore();

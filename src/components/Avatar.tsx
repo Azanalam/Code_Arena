@@ -21,6 +21,7 @@ export function Avatar({ name, image, size = 32, className = "" }: AvatarProps) 
 
   if (image) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={image}
         alt={name ?? ""}
@@ -39,3 +40,4 @@ export function Avatar({ name, image, size = 32, className = "" }: AvatarProps) 
     </div>
   );
 }
+

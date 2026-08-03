@@ -291,7 +291,7 @@ function setupSocketServer(httpServer: import("http").Server) {
   });
 
   socket.on("request-hint", () => {
-    for (const [roomId, room] of rooms) {
+    for (const room of rooms.values()) {
       if (room.players.has(socket.data.userId)) {
         socket.emit("ai-hint", {
           userId: "ai",
