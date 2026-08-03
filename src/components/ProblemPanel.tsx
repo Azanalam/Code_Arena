@@ -13,12 +13,12 @@ export function ProblemPanel() {
         <div className="text-center space-y-2">
           {status === "waiting" ? (
             <>
-              <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="w-5 h-5 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-zinc-500 text-xs">Waiting for host to start...</p>
             </>
           ) : (
             <>
-              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="w-5 h-5 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-zinc-600 text-xs">Loading problem...</p>
             </>
           )}
@@ -28,9 +28,9 @@ export function ProblemPanel() {
   }
 
   const diffColor =
-    problem.difficulty === "easy" ? "text-green-400 bg-green-900/20" :
-    problem.difficulty === "medium" ? "text-yellow-400 bg-yellow-900/20" :
-    "text-red-400 bg-red-900/20";
+    problem.difficulty === "easy" ? "text-zinc-200 bg-zinc-800/80" :
+    problem.difficulty === "medium" ? "text-stone-300 bg-zinc-800/80" :
+    "text-white bg-zinc-700/80";
 
   return (
     <div className="h-full flex flex-col bg-zinc-900/80 border border-zinc-800 rounded-lg overflow-hidden">
@@ -45,7 +45,7 @@ export function ProblemPanel() {
         <button
           className={`px-4 py-2 font-medium transition-colors ${
             tab === "description"
-              ? "text-white border-b-2 border-blue-500 bg-blue-900/10"
+              ? "text-white border-b-2 border-zinc-300 bg-white/10"
               : "text-zinc-500 hover:text-zinc-300"
           }`}
           onClick={() => setTab("description")}
@@ -55,7 +55,7 @@ export function ProblemPanel() {
         <button
           className={`px-4 py-2 font-medium transition-colors ${
             tab === "examples"
-              ? "text-white border-b-2 border-blue-500 bg-blue-900/10"
+              ? "text-white border-b-2 border-zinc-300 bg-white/10"
               : "text-zinc-500 hover:text-zinc-300"
           }`}
           onClick={() => setTab("examples")}
@@ -67,7 +67,7 @@ export function ProblemPanel() {
       <div className="flex-1 overflow-y-auto p-4 text-sm text-zinc-300 space-y-4">
         {tab === "description" ? (
           <div
-            className="prose prose-invert prose-sm max-w-none [&_code]:text-blue-300 [&_code]:bg-zinc-800 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_li]:text-zinc-300 [&_ol]:space-y-2"
+            className="prose prose-invert prose-sm max-w-none [&_code]:text-zinc-200 [&_code]:bg-zinc-800 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_li]:text-zinc-300 [&_ol]:space-y-2"
             dangerouslySetInnerHTML={{ __html: problem.description }}
           />
         ) : (

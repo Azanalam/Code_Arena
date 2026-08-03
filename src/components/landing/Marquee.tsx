@@ -12,7 +12,7 @@ export function Marquee() {
         {row.map((item, i) => (
           <span key={i} className="flex items-center gap-10 text-sm text-zinc-500">
             <span className="uppercase tracking-wide">{item}</span>
-            <span className="text-blue-500/60">✦</span>
+            <span className="text-stone-400/60">✦</span>
           </span>
         ))}
       </div>

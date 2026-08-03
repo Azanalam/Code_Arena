@@ -12,7 +12,7 @@ import type { LandingUser } from "./types";
 
 export function LandingPage({ user }: { user: LandingUser | null }) {
   return (
-    <div className="min-h-screen bg-[#050810] text-white selection:bg-blue-600/40">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-zinc-300/40 selection:text-zinc-950">
       <Navbar user={user} />
       <main>
         <Hero user={user} />

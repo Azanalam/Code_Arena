@@ -5,9 +5,9 @@ import { Reveal } from "./Reveal";
 import { PREVIEW_PROBLEMS, type ProblemPreview } from "./types";
 
 const DIFF_COLORS: Record<ProblemPreview["difficulty"], { badge: string; pulse: string }> = {
-  easy: { badge: "bg-emerald-900/50 text-emerald-400 border-emerald-700/40", pulse: "from-emerald-500/15" },
-  medium: { badge: "bg-yellow-900/50 text-yellow-400 border-yellow-700/40", pulse: "from-amber-500/15" },
-  hard: { badge: "bg-red-900/50 text-red-400 border-red-700/40", pulse: "from-red-500/15" },
+  easy: { badge: "bg-zinc-200/90 text-zinc-900 border-zinc-300/60", pulse: "from-white/10" },
+  medium: { badge: "bg-stone-300/90 text-zinc-950 border-stone-400/60", pulse: "from-stone-400/10" },
+  hard: { badge: "bg-white text-black border-white/70", pulse: "from-white/15" },
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -35,7 +35,7 @@ export function ProblemsShowcase() {
     <section className="relative py-24">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <Reveal className="text-center mb-12">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-400 mb-3">The battleground</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-400 mb-3">The battleground</p>
           <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">40+ challenges, three difficulty tiers</h2>
         </Reveal>
 
@@ -47,7 +47,7 @@ export function ProblemsShowcase() {
                 onClick={() => setFilter(t.key)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   filter === t.key
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-600/25"
+                    ? "bg-white text-zinc-950 shadow-lg shadow-black/30"
                     : "text-zinc-400 hover:text-white"
                 }`}
               >

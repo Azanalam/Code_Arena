@@ -56,7 +56,7 @@ export function Particles({ className = "" }: ParticlesProps) {
         if (p.y > h) p.y = 0;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(147, 197, 253, ${p.a})`;
+        ctx.fillStyle = `rgba(250, 250, 250, ${p.a})`;
         ctx.fill();
       }
       for (let i = 0; i < dots.length; i++) {
@@ -68,7 +68,7 @@ export function Particles({ className = "" }: ParticlesProps) {
             ctx.beginPath();
             ctx.moveTo(dots[i].x, dots[i].y);
             ctx.lineTo(dots[j].x, dots[j].y);
-            ctx.strokeStyle = `rgba(96, 165, 250, ${0.14 * (1 - dist / 10000)})`;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.14 * (1 - dist / 10000)})`;
             ctx.lineWidth = 1;
             ctx.stroke();
           }

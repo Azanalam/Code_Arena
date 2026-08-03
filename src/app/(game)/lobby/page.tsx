@@ -98,7 +98,7 @@ export default function LobbyPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-white">
-            Code<span className="text-blue-500">Arena</span>
+            Code<span className="text-stone-300">Arena</span>
           </h1>
           <p className="text-zinc-500 text-sm">Create or join a coding battle</p>
         </div>
@@ -116,7 +116,7 @@ export default function LobbyPage() {
             <div>
               <label className="block text-sm text-zinc-400 mb-1.5">Your Name</label>
               <input
-                className="w-full bg-zinc-800 text-white rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full bg-zinc-800 text-white rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-zinc-400 text-sm"
                 placeholder="Enter your name"
                 maxLength={20}
                 value={name}
@@ -128,7 +128,7 @@ export default function LobbyPage() {
           <button
             onClick={createRoom}
             disabled={loading || !canPlay}
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white rounded-lg font-medium transition-all"
+            className="w-full py-2.5 bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 rounded-lg font-medium transition-all"
           >
             {loading ? "Creating..." : "Create New Room"}
           </button>
@@ -145,7 +145,7 @@ export default function LobbyPage() {
           {matching ? (
             <button
               onClick={cancelQuickMatch}
-              className="w-full py-3 bg-gradient-to-r from-purple-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-3"
+              className="w-full py-3 bg-gradient-to-r from-zinc-200 to-white hover:from-zinc-300 hover:to-zinc-100 text-zinc-950 rounded-lg font-medium transition-all flex items-center justify-center gap-3"
             >
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               Searching for opponent... (click to cancel)
@@ -154,7 +154,7 @@ export default function LobbyPage() {
             <button
               onClick={startQuickMatch}
               disabled={loading || !canPlay}
-              className="w-full py-3 bg-gradient-to-r from-purple-700 to-blue-700 hover:from-purple-600 hover:to-blue-600 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 text-white rounded-lg font-medium transition-all"
+              className="w-full py-3 bg-gradient-to-r from-zinc-200 to-white hover:from-zinc-300 hover:to-zinc-100 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 text-zinc-950 rounded-lg font-medium transition-all"
             >
               Quick Play
             </button>
@@ -171,7 +171,7 @@ export default function LobbyPage() {
 
           <div className="space-y-3">
             <input
-              className="w-full bg-zinc-800 text-white rounded-lg px-4 py-2.5 text-center text-lg font-mono tracking-widest uppercase outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-zinc-800 text-white rounded-lg px-4 py-2.5 text-center text-lg font-mono tracking-widest uppercase outline-none focus:ring-2 focus:ring-zinc-400"
               placeholder="ROOM CODE"
               maxLength={6}
               value={joinCode}
@@ -211,15 +211,15 @@ export default function LobbyPage() {
         </div>
 
         <div className="flex items-center justify-center gap-4">
-          <button onClick={() => router.push("/problems")} className="text-sm text-zinc-600 hover:text-blue-400 transition-colors">
+          <button onClick={() => router.push("/problems")} className="text-sm text-zinc-600 hover:text-zinc-300 transition-colors">
             Problems
           </button>
           <span className="text-zinc-800 text-xs">|</span>
-          <button onClick={() => router.push("/leaderboard")} className="text-sm text-zinc-600 hover:text-blue-400 transition-colors">
+          <button onClick={() => router.push("/leaderboard")} className="text-sm text-zinc-600 hover:text-zinc-300 transition-colors">
             Leaderboard
           </button>
           <span className="text-zinc-800 text-xs">|</span>
-          <button onClick={() => router.push("/profile")} className="text-sm text-zinc-600 hover:text-blue-400 transition-colors">
+          <button onClick={() => router.push("/profile")} className="text-sm text-zinc-600 hover:text-zinc-300 transition-colors">
             Profile
           </button>
         </div>

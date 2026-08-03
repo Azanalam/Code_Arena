@@ -48,7 +48,7 @@ export default function ProfilePage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -56,15 +56,15 @@ export default function ProfilePage() {
   if (status === "unauthenticated") {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-6 px-4">
-        <span className="text-white font-bold text-2xl">Code<span className="text-blue-500">Arena</span></span>
+        <span className="text-white font-bold text-2xl">Code<span className="text-stone-300">Arena</span></span>
         <p className="text-zinc-400 text-sm">Sign in to view your submission history.</p>
         <button
           onClick={() => signIn("google", { redirectTo: "/profile" })}
-          className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all"
+          className="px-6 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 rounded-lg font-medium transition-all"
         >
           Sign In
         </button>
-        <button onClick={() => router.push("/lobby")} className="text-sm text-zinc-600 hover:text-blue-400 transition-colors">
+        <button onClick={() => router.push("/lobby")} className="text-sm text-zinc-600 hover:text-zinc-300 transition-colors">
           Back to Lobby
         </button>
       </div>
@@ -98,7 +98,7 @@ export default function ProfilePage() {
         <button onClick={() => router.push("/lobby")} className="text-zinc-400 hover:text-white transition-colors">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
-        <span className="text-white font-bold text-lg">Code<span className="text-blue-500">Arena</span></span>
+        <span className="text-white font-bold text-lg">Code<span className="text-stone-300">Arena</span></span>
         <span className="text-zinc-500 text-sm">Profile</span>
       </header>
 
@@ -113,7 +113,7 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-blue-400">{attempts}</div>
+            <div className="text-3xl font-bold text-stone-200">{attempts}</div>
             <div className="text-xs text-zinc-500 mt-1">Attempts</div>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
@@ -121,15 +121,15 @@ export default function ProfilePage() {
             <div className="text-xs text-zinc-500 mt-1">Solved</div>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-yellow-400">{totalScore}</div>
+            <div className="text-3xl font-bold text-zinc-100">{totalScore}</div>
             <div className="text-xs text-zinc-500 mt-1">Points</div>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-purple-400">{solveRate}%</div>
+            <div className="text-3xl font-bold text-stone-200">{solveRate}%</div>
             <div className="text-xs text-zinc-500 mt-1">Solve Rate</div>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-cyan-400">{uniqueSolved}</div>
+            <div className="text-3xl font-bold text-zinc-200">{uniqueSolved}</div>
             <div className="text-xs text-zinc-500 mt-1">Problems</div>
           </div>
         </div>
@@ -148,7 +148,7 @@ export default function ProfilePage() {
         <div>
           <h2 className="text-lg font-semibold mb-4">Submission History</h2>
           {loading ? (
-            <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+            <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" /></div>
           ) : submissions.length === 0 ? (
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center">
               <p className="text-zinc-500 text-sm">No submissions yet. Play a game or practice a problem!</p>
@@ -162,8 +162,8 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="font-medium text-sm truncate">{s.title}</span>
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded capitalize ${
-                        s.difficulty === "easy" ? "bg-green-900/50 text-green-400" :
-                        s.difficulty === "medium" ? "bg-yellow-900/50 text-yellow-400" : "bg-red-900/50 text-red-400"
+s.difficulty === "easy" ? "bg-zinc-800/80 text-zinc-200" :
+    s.difficulty === "medium" ? "bg-zinc-800/80 text-stone-300" : "bg-zinc-700/80 text-white"
                       }`}>{s.difficulty}</span>
                       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 uppercase">
                         {s.language}

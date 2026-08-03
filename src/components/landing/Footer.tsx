@@ -5,7 +5,7 @@ export function Footer() {
     <footer className="border-t border-white/10 bg-white/[0.02]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6">
         <Link href="/" className="flex items-center gap-2 font-bold text-white">
-          <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs shadow-lg shadow-blue-500/30">
+          <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-zinc-200 to-stone-400 flex items-center justify-center text-xs text-zinc-950 shadow-lg shadow-black/40">
             &lt;/&gt;
           </span>
           Code<span className="text-gradient">Arena</span>

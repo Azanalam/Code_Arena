@@ -40,7 +40,7 @@ export default function LeaderboardPage() {
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
         <span className="text-white font-bold text-lg">
-          Code<span className="text-blue-500">Arena</span>
+          Code<span className="text-stone-300">Arena</span>
         </span>
         <span className="text-zinc-500 text-sm">Leaderboard</span>
       </header>
@@ -71,7 +71,7 @@ export default function LeaderboardPage() {
                   <div className="font-medium truncate">{e.name}</div>
                   <div className="text-[11px] text-zinc-600">{new Date(e.date).toLocaleDateString()}</div>
                 </div>
-                <span className="text-blue-400 font-mono font-bold">{e.score} pts</span>
+                <span className="text-stone-300 font-mono font-bold">{e.score} pts</span>
               </div>
             ))}
           </div>

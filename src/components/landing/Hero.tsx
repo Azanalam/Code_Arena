@@ -7,8 +7,8 @@ import { TypingCode } from "./TypingCode";
 import type { LandingUser } from "./types";
 
 const PLAYERS = [
-  { name: "alice_codes", color: "#22d3ee", diff: "easy" },
-  { name: "you", color: "#a78bfa", diff: "hard" },
+  { name: "alice_codes", color: "#a1a1aa", diff: "easy" },
+  { name: "you", color: "#d6d3d1", diff: "hard" },
 ];
 
 function LiveBattleCard() {
@@ -40,7 +40,7 @@ function LiveBattleCard() {
               <span className="w-4 h-4 rounded-full ring-1 ring-white/20" style={{ background: p.color }} />
               {p.name}
             </span>
-            <span className={`font-mono ${progress[i] >= 100 ? "text-emerald-400" : "text-zinc-400"} transition-colors`}>
+            <span className={`font-mono ${progress[i] >= 100 ? "text-zinc-100" : "text-zinc-400"} transition-colors`}>
               {progress[i] >= 100 ? "✓ " + statusA : statusB && i === 1 ? statusB : statusA}
             </span>
           </div>
@@ -56,8 +56,8 @@ function LiveBattleCard() {
       <div className="flex items-center justify-between pt-3 border-t border-white/10 text-xs">
         <span className="text-zinc-500 font-mono">06:43 left</span>
         <div className="flex gap-1.5">
-          <span className="px-2 py-0.5 rounded-md bg-emerald-900/40 text-emerald-400 font-medium">Easy</span>
-          <span className="px-2 py-0.5 rounded-md bg-red-900/40 text-red-400 font-medium">Hard</span>
+          <span className="px-2 py-0.5 rounded-md bg-zinc-200/20 text-zinc-200 font-medium">Easy</span>
+          <span className="px-2 py-0.5 rounded-md bg-stone-400/20 text-stone-200 font-medium">Hard</span>
         </div>
       </div>
     </div>
@@ -85,7 +85,7 @@ export function Hero({ user }: { user: LandingUser | null }) {
 
   const spotlight = useMemo(
     () => ({
-      background: `radial-gradient(600px circle at ${mouse.x}px ${mouse.y}px, rgba(59,130,246,0.12), transparent 65%)`,
+      background: `radial-gradient(600px circle at ${mouse.x}px ${mouse.y}px, rgba(255,255,255,0.07), transparent 65%)`,
     }),
     [mouse]
   );
@@ -101,9 +101,9 @@ export function Hero({ user }: { user: LandingUser | null }) {
       <div className="absolute inset-0 -z-10">
         <Particles className="absolute inset-0" />
         <div className="absolute inset-0 bg-grid opacity-40 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_30%,black,transparent)]" />
-        <div className="absolute -top-40 -left-40 w-[34rem] h-[34rem] rounded-full bg-blue-600/20 blur-[120px] animate-aurora" />
-        <div className="absolute -top-20 right-0 w-[30rem] h-[30rem] rounded-full bg-purple-600/20 blur-[120px] animate-aurora" style={{ animationDelay: "-6s" }} />
-        <div className="absolute bottom-0 left-1/3 w-[28rem] h-[28rem] rounded-full bg-fuchsia-600/10 blur-[130px] animate-aurora" style={{ animationDelay: "-10s" }} />
+        <div className="absolute -top-40 -left-40 w-[34rem] h-[34rem] rounded-full bg-zinc-400/10 blur-[120px] animate-aurora" />
+        <div className="absolute -top-20 right-0 w-[30rem] h-[30rem] rounded-full bg-stone-400/10 blur-[120px] animate-aurora" style={{ animationDelay: "-6s" }} />
+        <div className="absolute bottom-0 left-1/3 w-[28rem] h-[28rem] rounded-full bg-neutral-300/10 blur-[130px] animate-aurora" style={{ animationDelay: "-10s" }} />
       </div>
       <div className="absolute inset-0 -z-10 pointer-events-none" style={spotlight} />
 
@@ -127,7 +127,7 @@ export function Hero({ user }: { user: LandingUser | null }) {
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <a
                 href="/lobby"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold shadow-xl shadow-blue-600/30 transition-all hover:scale-[1.03]"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-white hover:bg-zinc-200 text-zinc-950 font-semibold shadow-xl shadow-black/30 transition-all hover:scale-[1.03]"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
                 Start a Battle
@@ -158,11 +158,11 @@ export function Hero({ user }: { user: LandingUser | null }) {
 
           <div className="relative space-y-6">
             <div className="hidden sm:block">
-              <div className="absolute -inset-8 -z-10 rounded-3xl bg-gradient-to-br from-blue-600/15 via-transparent to-purple-600/15 blur-2xl animate-float" />
+              <div className="absolute -inset-8 -z-10 rounded-3xl bg-gradient-to-br from-zinc-400/15 via-transparent to-stone-400/15 blur-2xl animate-float" />
               <CodeWindow />
             </div>
             <div className="hidden sm:block max-w-sm ml-8">
-              <div className="absolute -inset-6 -z-10 rounded-3xl bg-fuchsia-600/10 blur-2xl animate-float" style={{ animationDelay: "-4s" }} />
+              <div className="absolute -inset-6 -z-10 rounded-3xl bg-stone-500/10 blur-2xl animate-float" style={{ animationDelay: "-4s" }} />
               <LiveBattleCard />
             </div>
           </div>

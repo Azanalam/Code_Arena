@@ -25,7 +25,7 @@ export function HowItWorks() {
     <section className="relative py-24">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <Reveal className="text-center mb-16">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-purple-400 mb-3">How it works</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-400 mb-3">How it works</p>
           <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">From lobby to victory in three steps</h2>
         </Reveal>
 
@@ -34,7 +34,7 @@ export function HowItWorks() {
             <Reveal key={s.n} delay={i * 110}>
               <div className="relative rounded-2xl glass p-7 h-full">
                 <div className="absolute top-0 left-7 -translate-y-1/2 flex items-center gap-3">
-                  <span className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-sm font-bold flex items-center justify-center text-white shadow-lg shadow-blue-600/30">
+                  <span className="w-9 h-9 rounded-lg bg-gradient-to-br from-zinc-200 to-stone-400 text-sm font-bold flex items-center justify-center text-zinc-950 shadow-lg shadow-black/40">
                     {s.n}
                   </span>
                   {i < STEPS.length - 1 && (

@@ -24,13 +24,13 @@ export function Scoreboard() {
           <div
             key={player.userId}
             className={`flex items-center gap-2 text-sm p-1.5 rounded ${
-              player.userId === myUserId ? "bg-blue-900/20" : ""
+              player.userId === myUserId ? "bg-zinc-700/40" : ""
             }`}
           >
             <span className="w-4 text-xs text-zinc-600 font-mono text-right">{i + 1}</span>
             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: player.color }} />
             <span className={`flex-1 truncate text-sm ${
-              player.userId === myUserId ? "text-blue-300" : "text-zinc-300"
+              player.userId === myUserId ? "text-zinc-100" : "text-zinc-300"
             }`}>
               {player.name}
             </span>

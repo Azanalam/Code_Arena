@@ -83,7 +83,7 @@ function Typer({ code, onDone }: { code: string; onDone: () => void }) {
           </div>
         );
       })}
-      <span className="inline-block w-2 h-4 bg-blue-400 align-middle animate-caret" />
+      <span className="inline-block w-2 h-4 bg-zinc-200 align-middle animate-caret" />
     </pre>
   );
 }

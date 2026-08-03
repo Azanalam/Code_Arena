@@ -7,7 +7,7 @@ interface AvatarProps {
   className?: string;
 }
 
-const COLORS = ["bg-blue-600", "bg-emerald-600", "bg-purple-600", "bg-rose-600", "bg-amber-600", "bg-cyan-600"];
+const COLORS = ["bg-zinc-300", "bg-stone-400", "bg-neutral-500", "bg-zinc-500", "bg-stone-300", "bg-neutral-400"];
 
 export function Avatar({ name, image, size = 32, className = "" }: AvatarProps) {
   const initials = (name ?? "?")
@@ -33,7 +33,7 @@ export function Avatar({ name, image, size = 32, className = "" }: AvatarProps) 
   return (
     <div
       style={{ width: size, height: size, fontSize: Math.max(10, size * 0.38) }}
-      className={`rounded-full flex items-center justify-center font-bold text-white ${COLORS[colorIndex]} flex-shrink-0 ${className}`}
+      className={`rounded-full flex items-center justify-center font-bold text-zinc-950 ${COLORS[colorIndex]} flex-shrink-0 ${className}`}
     >
       {initials}
     </div>

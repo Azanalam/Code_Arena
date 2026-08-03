@@ -73,7 +73,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
     return (
       <div className="h-dvh bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-zinc-400 text-sm">Connecting to game...</p>
         </div>
       </div>
@@ -106,7 +106,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
           <span className="text-white font-bold text-lg">
-            Code<span className="text-blue-500">Arena</span>
+            Code<span className="text-stone-300">Arena</span>
           </span>
           <span className="text-zinc-700 hidden sm:inline">|</span>
           <button onClick={copyRoomCode} className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors text-sm font-mono bg-zinc-800/50 px-2.5 py-1 rounded-md">
@@ -131,7 +131,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-md outline-none focus:ring-1 focus:ring-blue-500 border border-zinc-700 cursor-pointer"
+                className="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-md outline-none focus:ring-1 focus:ring-zinc-400 border border-zinc-700 cursor-pointer"
               >
                 <option value="all">All</option>
                 <option value="javascript">JavaScript</option>
@@ -142,7 +142,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-md outline-none focus:ring-1 focus:ring-blue-500 border border-zinc-700 cursor-pointer"
+                className="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-md outline-none focus:ring-1 focus:ring-zinc-400 border border-zinc-700 cursor-pointer"
               >
                 <option value="all">All</option>
                 <option value="easy">Easy</option>
@@ -168,7 +168,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white text-sm font-medium rounded-md transition-all"
+                className="px-4 py-1.5 bg-white hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 text-sm font-medium rounded-md transition-all"
               >
                 {submitting ? "Running..." : "Submit"}
               </button>
@@ -231,7 +231,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               onClick={() => setMobileTab(t.key as "problem" | "editor" | "players" | "chat")}
               className={`flex-1 py-2.5 text-xs font-medium uppercase tracking-wide transition-colors ${
                 mobileTab === t.key
-                  ? "text-white border-b-2 border-blue-500 bg-blue-900/10"
+                  ? "text-white border-b-2 border-zinc-300 bg-white/10"
                   : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
@@ -247,7 +247,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
             <div className="space-y-2">
               {[...players].sort((a, b) => b.score - a.score).map((p, i) => (
                 <div key={p.userId} className={`flex items-center gap-3 p-3 rounded-lg ${
-                  p.userId === myUserId ? "bg-blue-900/30 border border-blue-800/50" : "bg-zinc-800/50"
+                  p.userId === myUserId ? "bg-zinc-700/40 border border-zinc-600/50" : "bg-zinc-800/50"
                 }`}>
                   <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
                     i === 0 ? "bg-yellow-500 text-black" :
@@ -263,7 +263,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               ))}
             </div>
             <div className="flex gap-3">
-              <button onClick={leaveRoom} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all">
+              <button onClick={leaveRoom} className="flex-1 py-2.5 bg-white hover:bg-zinc-200 text-zinc-950 rounded-lg font-medium transition-all">
                 Play Again
               </button>
               <button onClick={() => { getSocket().emit("leave-room", { roomId }); reset(); router.push("/"); }} className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg font-medium transition-all">

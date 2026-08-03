@@ -25,7 +25,7 @@ export function Navbar({ user }: { user: LandingUser | null }) {
     >
       <nav className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-white text-lg shrink-0">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-sm shadow-lg shadow-blue-500/30">
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-zinc-200 to-stone-400 flex items-center justify-center text-sm text-zinc-950 shadow-lg shadow-black/40">
             &lt;/&gt;
           </span>
           Code<span className="text-gradient">Arena</span>
@@ -61,7 +61,7 @@ export function Navbar({ user }: { user: LandingUser | null }) {
           )}
           <Link
             href="/lobby"
-            className="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg shadow-blue-600/25 transition-all"
+            className="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg bg-white hover:bg-zinc-200 text-zinc-950 shadow-lg shadow-black/30 transition-all"
           >
             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
