@@ -22,18 +22,15 @@ export async function runTestCases(
 
       const script = new vm.Script(wrapped);
       const actual = String(
-        script.runInNewContext(sandbox, { timeout: 3000 } as any)
+        script.runInNewContext(sandbox, { timeout: 3000 })
       );
       const passed = actual === tc.expected.trim();
 
       results.push({ input: tc.input, expected: tc.expected, actual, passed });
     } catch (err) {
       const message =
-        typeof err === "object" && err !== null && typeof (err as any).message === "string"
-          ? (err as any).message
-          : typeof err === "string"
-            ? err
-            : "ERROR";
+        err instanceof Error ? err.message :
+        typeof err === "string" ? err : "ERROR";
       results.push({
         input: tc.input,
         expected: tc.expected,

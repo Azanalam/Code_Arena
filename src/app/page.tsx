@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
-import { Hero } from "@/components/Hero";
+import { LandingPage } from "@/components/landing/LandingPage";
 
 export default async function Home() {
   const session = await auth();
-  return <Hero user={session?.user ?? null} />;
+  return <LandingPage user={session?.user ?? null} />;
 }

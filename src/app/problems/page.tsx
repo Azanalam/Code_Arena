@@ -56,7 +56,7 @@ export default function ProblemsPage() {
 
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <h1 className="text-2xl font-bold">All Problems</h1>
+          <h1 className="text-2xl font-bold">All Problems <span className="text-zinc-600 text-base font-normal">({problems.length})</span></h1>
           <div className="flex flex-wrap gap-2">
             {categories.map((c) => (
               <button key={c} onClick={() => setFilter(c)} className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all capitalize ${
@@ -69,7 +69,11 @@ export default function ProblemsPage() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="space-y-2">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="h-14 bg-zinc-900 border border-zinc-800 rounded-lg animate-pulse" />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <p className="text-zinc-500 text-center py-12">No problems found.</p>
         ) : (

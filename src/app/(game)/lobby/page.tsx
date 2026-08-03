@@ -6,6 +6,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { getSocket } from "@/lib/socket";
 import { useGameStore } from "@/store/gameStore";
 import { generateRoomCode, getPlayerId } from "@/lib/gameLogic";
+import { Avatar } from "@/components/Avatar";
 
 export default function LobbyPage() {
   const router = useRouter();
@@ -16,10 +17,11 @@ export default function LobbyPage() {
   const [loading, setLoading] = useState(false);
   const [matching, setMatching] = useState(false);
   const [name, setName] = useState(myName || "");
+  const [fallbackName] = useState(() => `Player_${Math.random().toString(36).slice(2, 6)}`);
 
   const sessionName = session?.user?.name?.trim();
   const getPlayerName = () =>
-    sessionName || name.trim() || `Player_${Math.random().toString(36).slice(2, 6)}`;
+    sessionName || name.trim() || fallbackName;
   const canPlay = !!session?.user || !!name.trim();
 
   const startQuickMatch = () => {
@@ -104,13 +106,7 @@ export default function LobbyPage() {
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 space-y-5">
           {session?.user ? (
             <div className="flex items-center gap-3 bg-zinc-800/60 border border-zinc-800 rounded-lg px-4 py-2.5">
-              {session.user.image ? (
-                <img src={session.user.image} alt="" className="w-6 h-6 rounded-full ring-1 ring-zinc-700" />
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                  {sessionName?.[0]?.toUpperCase()}
-                </div>
-              )}
+              <Avatar name={session.user.name} image={session.user.image} size={24} className="ring-1" />
               <div className="min-w-0">
                 <p className="text-sm text-white truncate">{session.user.name}</p>
                 <p className="text-xs text-zinc-500">Playing as your username</p>
@@ -231,9 +227,7 @@ export default function LobbyPage() {
         <div className="text-center pt-4 border-t border-zinc-800">
           {session?.user ? (
             <div className="flex items-center justify-center gap-3">
-              {session.user.image && (
-                <img src={session.user.image} alt="" className="w-6 h-6 rounded-full ring-1 ring-zinc-700" />
-              )}
+              <Avatar name={session.user.name} image={session.user.image} size={24} className="ring-1" />
               <span className="text-zinc-400 text-sm">{session.user.name}</span>
               <button onClick={() => signOut()} className="text-xs text-zinc-600 hover:text-red-400 transition-colors">
                 Sign Out

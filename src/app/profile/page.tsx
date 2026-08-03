@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { getSocket } from "@/lib/socket";
+import { Avatar } from "@/components/Avatar";
 
 interface SubmissionSummary {
   id: string;
@@ -74,8 +75,22 @@ export default function ProfilePage() {
     return null;
   }
 
+  const attempts = submissions.length;
   const solved = submissions.filter((s) => s.passed).length;
   const totalScore = submissions.reduce((sum, s) => sum + (s.passed ? s.score : 0), 0);
+  const solveRate = attempts > 0 ? Math.round((solved / attempts) * 100) : 0;
+  const uniqueSolved = new Set(submissions.filter((s) => s.passed).map((s) => s.problemId)).size;
+
+  const byCategory = submissions.reduce<Record<string, number>>((acc, s) => {
+    acc[s.category] = (acc[s.category] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const categoryLabels: Record<string, string> = {
+    javascript: "JavaScript",
+    html: "HTML",
+    css: "CSS",
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -89,18 +104,16 @@ export default function ProfilePage() {
 
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center gap-4">
-          {session.user.image && (
-            <img src={session.user.image} alt="" className="w-16 h-16 rounded-full ring-2 ring-zinc-700" />
-          )}
+          <Avatar name={session.user.name} image={session.user.image} size={64} />
           <div>
             <h1 className="text-2xl font-bold">{session.user.name}</h1>
             <p className="text-zinc-500 text-sm">{session.user.email}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-blue-400">{submissions.length}</div>
+            <div className="text-3xl font-bold text-blue-400">{attempts}</div>
             <div className="text-xs text-zinc-500 mt-1">Attempts</div>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
@@ -111,7 +124,26 @@ export default function ProfilePage() {
             <div className="text-3xl font-bold text-yellow-400">{totalScore}</div>
             <div className="text-xs text-zinc-500 mt-1">Points</div>
           </div>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
+            <div className="text-3xl font-bold text-purple-400">{solveRate}%</div>
+            <div className="text-xs text-zinc-500 mt-1">Solve Rate</div>
+          </div>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
+            <div className="text-3xl font-bold text-cyan-400">{uniqueSolved}</div>
+            <div className="text-xs text-zinc-500 mt-1">Problems</div>
+          </div>
         </div>
+
+        {attempts > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-zinc-500">Activity by topic:</span>
+            {Object.entries(byCategory).map(([cat, count]) => (
+              <span key={cat} className="text-xs font-medium px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300">
+                {categoryLabels[cat] ?? cat} · {count}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div>
           <h2 className="text-lg font-semibold mb-4">Submission History</h2>
@@ -124,7 +156,7 @@ export default function ProfilePage() {
           ) : (
             <div className="space-y-2">
               {submissions.map((s) => (
-                <div key={s.id} className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-3 min-w-0">
+                <div key={s.id} className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-3 min-w-0 hover:bg-zinc-900/70 transition-colors">
                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${s.passed ? "bg-green-400" : "bg-red-400"}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
@@ -133,6 +165,9 @@ export default function ProfilePage() {
                         s.difficulty === "easy" ? "bg-green-900/50 text-green-400" :
                         s.difficulty === "medium" ? "bg-yellow-900/50 text-yellow-400" : "bg-red-900/50 text-red-400"
                       }`}>{s.difficulty}</span>
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 uppercase">
+                        {s.language}
+                      </span>
                     </div>
                     <div className="text-xs text-zinc-500 mt-0.5 truncate">
                       {new Date(s.createdAt).toLocaleString()} · {s.category}

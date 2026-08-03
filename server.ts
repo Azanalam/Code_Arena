@@ -2,7 +2,7 @@ import "dotenv/config";
 import { createServer } from "http";
 import next from "next";
 import { Server } from "socket.io";
-import { PrismaClient } from "./src/generated/prisma/client";
+import { PrismaClient, Prisma } from "./src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { runTestCases, runMarkupTestCases } from "./src/lib/piston";
 
@@ -12,19 +12,43 @@ const port = parseInt(process.env.PORT ?? "3000", 10);
 const nextApp = next({ dev });
 const handle = nextApp.getRequestHandler();
 
-const prismaAdapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter: prismaAdapter });
+type RoomPlayer = {
+  userId: string;
+  socketId: string;
+  connected: boolean;
+  name: string;
+  image: string | null;
+  score: number;
+  solved: boolean;
+  color: string;
+};
 
-const rooms = new Map<string, {
+type RoomProblem = {
+  id: string;
+  title: string;
+  difficulty: string;
+  category: string;
+  description: string;
+  examples: { input: string; output: string; explanation?: string }[];
+  testCases: { input: string; expected: string }[];
+  starterCode: string;
+};
+
+type Room = {
   code: string;
-  players: Map<string, any>;
+  players: Map<string, RoomPlayer>;
   spectators: Set<string>;
-  problem: any;
+  problem: RoomProblem | null;
   status: string;
   timeRemaining: number;
   timer: NodeJS.Timeout | null;
   cleanupTimer: NodeJS.Timeout | null;
-}>();
+};
+
+const prismaAdapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter: prismaAdapter });
+
+const rooms = new Map<string, Room>();
 
 let matchQueue: { socketId: string; name: string; userId: string }[] = [];
 
@@ -38,7 +62,7 @@ function generateRoomCode(): string {
 }
 
 async function fetchRandomProblem(category?: string, difficulty?: string) {
-  const where: any = {};
+  const where: Prisma.ProblemWhereInput = {};
   if (category && category !== "all") where.category = category;
   if (difficulty && difficulty !== "all") where.difficulty = difficulty;
   const problemCount = await prisma.problem.count({ where });
@@ -441,18 +465,9 @@ function setupSocketServer(httpServer: import("http").Server) {
 
       const code = generateRoomCode();
       const roomId = `quick-${code}-${Date.now()}`;
-      const room: {
-        code: string;
-        players: Map<string, any>;
-        spectators: Set<string>;
-        problem: any;
-        status: string;
-        timeRemaining: number;
-        timer: NodeJS.Timeout | null;
-        cleanupTimer: NodeJS.Timeout | null;
-      } = {
+      const room: Room = {
         code,
-        players: new Map<string, any>(),
+        players: new Map<string, RoomPlayer>(),
         spectators: new Set<string>(),
         problem: null,
         status: "waiting",

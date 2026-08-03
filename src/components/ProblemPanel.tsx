@@ -72,7 +72,7 @@ export function ProblemPanel() {
           />
         ) : (
           <div className="space-y-3">
-            {problem.examples.map((ex: any, i: number) => (
+            {problem.examples.map((ex, i) => (
               <div key={i} className="bg-zinc-800/50 border border-zinc-700/50 rounded-lg p-3 space-y-2">
                 <div className="text-xs font-medium text-zinc-500">Example {i + 1}</div>
                 <div>

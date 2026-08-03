@@ -2,11 +2,34 @@
 
 import { useEffect } from "react";
 import { io, Socket } from "socket.io-client";
-import { useGameStore } from "@/store/gameStore";
-import { getPlayerId } from "@/lib/gameLogic";
+import { useGameStore, type ChatMessage, type TestResult } from "@/store/gameStore";
+import { getPlayerId, type PlayerState, type ProblemData } from "@/lib/gameLogic";
 import { playPass, playFail, playSubmit, playGameOver } from "./sounds";
 
 let socket: Socket | null = null;
+
+interface RoomStatePayload {
+  players: PlayerState[];
+  problem: ProblemData | null;
+  status: "waiting" | "countdown" | "playing" | "review" | "finished";
+  timeRemaining: number;
+  userId?: string;
+  reconnected?: boolean;
+}
+
+interface TestResultsPayload {
+  results: TestResult[];
+  passed: boolean;
+}
+
+interface GameStartPayload {
+  problem: ProblemData;
+  timeLimit: number;
+}
+
+interface GameOverPayload {
+  players: PlayerState[];
+}
 
 export function getSocket(): Socket {
   if (!socket) {
@@ -32,7 +55,7 @@ export function useSocket(roomId: string) {
       s.emit("join-room", { roomId, userId: getPlayerId() });
     };
 
-    const handleRoomState = (state: any) => {
+    const handleRoomState = (state: RoomStatePayload) => {
       setPlayers(state.players);
       setProblem(state.problem);
       setStatus(state.status);
@@ -42,7 +65,7 @@ export function useSocket(roomId: string) {
       if (state.userId) setMyUserId(state.userId);
     };
 
-    const handleTestResults = (results: any) => {
+    const handleTestResults = (results: TestResultsPayload) => {
       setTestResults(results.results);
       setSubmitting(false);
       if (results.passed) {
@@ -56,28 +79,28 @@ export function useSocket(roomId: string) {
     s.on("connect", handleConnect);
     s.on("disconnect", () => setConnecting(true));
     s.on("room-state", handleRoomState);
-    s.on("player-joined", (player) => addPlayer(player));
-    s.on("player-left", (userId) => removePlayer(userId));
-    s.on("score-update", ({ userId, score }) => updatePlayerScore(userId, score));
-    s.on("countdown", ({ count }) => {
+    s.on("player-joined", (player: PlayerState) => addPlayer(player));
+    s.on("player-left", (userId: string) => removePlayer(userId));
+    s.on("score-update", ({ userId, score }: { userId: string; score: number }) => updatePlayerScore(userId, score));
+    s.on("countdown", ({ count }: { count: number }) => {
       setCountdown(count);
       setStatus("countdown");
     });
-    s.on("game-start", ({ problem, timeLimit }) => {
+    s.on("game-start", ({ problem, timeLimit }: GameStartPayload) => {
       setProblem(problem);
       setStatus("playing");
       setTimeRemaining(timeLimit);
       setCountdown(0);
       if (problem?.starterCode) setCode(problem.starterCode);
     });
-    s.on("timer-tick", (time) => setTimeRemaining(time));
-    s.on("game-over", ({ players }) => {
+    s.on("timer-tick", (time: number) => setTimeRemaining(time));
+    s.on("game-over", ({ players }: GameOverPayload) => {
       setPlayers(players);
       setStatus("finished");
       playGameOver();
     });
-    s.on("chat-message", (msg) => addChatMessage(msg));
-    s.on("ai-hint", (hint) => addChatMessage({ userId: "ai", name: "AI Mentor", text: hint }));
+    s.on("chat-message", (msg: ChatMessage) => addChatMessage(msg));
+    s.on("ai-hint", (hint: string) => addChatMessage({ userId: "ai", name: "AI Mentor", text: hint }));
     s.on("test-results", handleTestResults);
 
     if (s.connected) {
