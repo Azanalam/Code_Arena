@@ -18,6 +18,21 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Testing
+
+```bash
+npm run test
+```
+
+Runs the unit tests (`tests/gameLogic.test.ts`, `tests/piston.test.ts`) and the socket-server integration test (`tests/server.integration.test.ts`). The integration test boots the real server on port `3211`, connects two socket.io clients, and plays a full game against the local database (create/join room, chat, AI hint, start game, code submission, scoring, game-over, room cleanup). It requires a reachable `DATABASE_URL` (from `.env`) with seeded problems.
+
+## Scripts
+
+- `npm run dev` — dev server (Next.js + Socket.io) on port 3000
+- `npm run build` — `prisma generate` + production build
+- `npm run lint` — ESLint over `.ts`/`.tsx`
+- `npm run test` — Node test runner via tsx
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

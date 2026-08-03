@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import { PrismaClient, Prisma } from "./src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { runTestCases, runMarkupTestCases } from "./src/lib/piston";
+import { calculateScore, generateRoomCode, type Difficulty } from "./src/lib/gameLogic";
 
 const dev = process.env.NODE_ENV !== "production";
 const port = parseInt(process.env.PORT ?? "3000", 10);
@@ -51,15 +52,6 @@ const prisma = new PrismaClient({ adapter: prismaAdapter });
 const rooms = new Map<string, Room>();
 
 let matchQueue: { socketId: string; name: string; userId: string }[] = [];
-
-function generateRoomCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
 
 async function fetchRandomProblem(category?: string, difficulty?: string) {
   const where: Prisma.ProblemWhereInput = {};
@@ -337,10 +329,7 @@ function setupSocketServer(httpServer: import("http").Server) {
           ? 600 - room.timeRemaining
           : 300;
         const difficulty = room.problem?.difficulty ?? "easy";
-        const score =
-          difficulty === "easy" ? 100 + Math.max(0, Math.floor((1 - timeSpent / 600) * 100)) :
-          difficulty === "medium" ? 250 + Math.max(0, Math.floor((1 - timeSpent / 600) * 250)) :
-          500 + Math.max(0, Math.floor((1 - timeSpent / 600) * 500));
+        const score = calculateScore(timeSpent, 600, difficulty as Difficulty);
 
         player.score += score;
         io.to(roomId).emit("score-update", { userId: socket.data.userId, score: player.score });
