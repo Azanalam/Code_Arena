@@ -47,6 +47,15 @@ export function HowItWorks() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={120}>
+          <div className="mt-10 glass rounded-2xl px-5 py-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-zinc-400">
+            <span className="text-xs uppercase tracking-[0.2em] text-stone-400 font-semibold">How scoring works</span>
+            <span>Base: <span className="font-bold text-white">Easy 100</span> · <span className="font-bold text-white">Medium 250</span> · <span className="font-bold text-white">Hard 500</span></span>
+            <span>+ up to <span className="font-bold text-white">100% time bonus</span> for fast solves</span>
+            <span>Winner takes the <span className="font-bold text-white">rating points</span> (ELO)</span>
+          </div>
+        </Reveal>
       </div>
     </section>
   );

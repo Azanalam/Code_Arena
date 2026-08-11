@@ -53,6 +53,61 @@ const rooms = new Map<string, Room>();
 
 let matchQueue: { socketId: string; name: string; userId: string }[] = [];
 
+function getStats(io: import("socket.io").Server) {
+  return {
+    online: io.engine.clientsCount,
+    queue: matchQueue.length,
+    rooms: rooms.size,
+  };
+}
+
+const RATING_K = 32;
+
+function ratingExpected(a: number, b: number): number {
+  return 1 / (1 + Math.pow(10, (b - a) / 400));
+}
+
+async function updateRatings(room: Room) {
+  const players = Array.from(room.players.values());
+  if (players.length < 2) return;
+  const userIds = players.map((p) => p.userId);
+  try {
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, rating: true },
+    });
+    if (users.length < 2) return;
+    const ratingById = new Map(users.map((u) => [u.id, u.rating]));
+    const sorted = [...players].sort((a, b) => b.score - a.score);
+    const deltas = new Map<string, number>();
+
+    for (let i = 0; i < sorted.length; i++) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        const a = sorted[i];
+        const b = sorted[j];
+        const ra = ratingById.get(a.userId);
+        const rb = ratingById.get(b.userId);
+        if (ra === undefined || rb === undefined) continue;
+        const ea = ratingExpected(ra, rb);
+        const sa = a.score > b.score ? 1 : a.score === b.score ? 0.5 : 0;
+        deltas.set(a.userId, (deltas.get(a.userId) ?? 0) + RATING_K * (sa - ea));
+        deltas.set(b.userId, (deltas.get(b.userId) ?? 0) + RATING_K * (1 - sa - (1 - ea)));
+      }
+    }
+
+    await Promise.all(
+      [...deltas].map(([id, delta]) =>
+        prisma.user.update({
+          where: { id },
+          data: { rating: { increment: Math.round(delta) } },
+        })
+      )
+    );
+  } catch (err) {
+    console.error("Failed to update ratings:", err);
+  }
+}
+
 async function fetchRandomProblem(category?: string, difficulty?: string) {
   const where: Prisma.ProblemWhereInput = {};
   if (category && category !== "all") where.category = category;
@@ -88,6 +143,7 @@ async function updateLeaderboard(roomId: string) {
       }
     }
   }
+  await updateRatings(room);
 }
 
 function setupSocketServer(httpServer: import("http").Server) {
@@ -100,6 +156,8 @@ function setupSocketServer(httpServer: import("http").Server) {
 
   io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
+  io.emit("stats", getStats(io));
+  socket.emit("stats", getStats(io));
 
   socket.on("create-room", ({ code, name, userId }, callback) => {
     const roomId = `${code}-${Date.now()}`;
@@ -377,10 +435,23 @@ function setupSocketServer(httpServer: import("http").Server) {
         orderBy: [{ score: "desc" }, { createdAt: "asc" }],
         take: 100,
       });
-      callback?.(entries.map((e) => ({ name: e.name, score: e.score, date: e.createdAt.getTime() })));
+      callback?.(entries.map((e) => ({ name: e.name, score: e.score, date: e.createdAt.getTime(), userId: e.userId })));
     } catch (err) {
       console.error("Failed to fetch leaderboard:", err);
       callback?.([]);
+    }
+  });
+
+  socket.on("get-profile", async ({ userId }, callback) => {
+    if (!userId) return callback?.({ error: "Not signed in" });
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { rating: true, name: true },
+      });
+      callback?.({ rating: user?.rating ?? 1000, name: user?.name ?? null });
+    } catch {
+      callback?.({ error: "Failed to load profile" });
     }
   });
 
@@ -438,6 +509,7 @@ function setupSocketServer(httpServer: import("http").Server) {
     socket.emit("matchmaking-status", { searching: true, queueSize: matchQueue.length });
     callback?.({ queued: true, userId: uid });
     io.emit("matchmaking-queue", matchQueue.length);
+    io.emit("stats", getStats(io));
 
     if (matchQueue.length >= 2) {
       const [a, b] = matchQueue.splice(0, 2);
@@ -489,6 +561,7 @@ function setupSocketServer(httpServer: import("http").Server) {
     matchQueue = matchQueue.filter((q) => q.socketId !== socket.id);
     socket.emit("matchmaking-status", { searching: false, queueSize: matchQueue.length });
     io.emit("matchmaking-queue", matchQueue.length);
+    io.emit("stats", getStats(io));
   });
 
   socket.on("get-submissions", async ({ userId }, callback) => {
@@ -566,6 +639,7 @@ function setupSocketServer(httpServer: import("http").Server) {
   socket.on("disconnect", () => {
     matchQueue = matchQueue.filter((q) => q.socketId !== socket.id);
     io.emit("matchmaking-queue", matchQueue.length);
+    io.emit("stats", getStats(io));
     const uid = socket.data?.userId;
     for (const [roomId, room] of rooms) {
       room.spectators.delete(socket.id);

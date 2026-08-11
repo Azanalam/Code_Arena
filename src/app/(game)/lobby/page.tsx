@@ -20,6 +20,7 @@ export default function LobbyPage() {
   const [fallbackName] = useState(() => `Player_${Math.random().toString(36).slice(2, 6)}`);
 
   const sessionName = session?.user?.name?.trim();
+  const userId = session?.user?.id ?? getPlayerId();
   const getPlayerName = () =>
     sessionName || name.trim() || fallbackName;
   const canPlay = !!session?.user || !!name.trim();
@@ -30,11 +31,10 @@ export default function LobbyPage() {
     const socket = getSocket();
     if (!socket.connected) socket.connect();
     const playerName = getPlayerName();
-    const myUserId = getPlayerId();
-    setMyUserId(myUserId);
+    setMyUserId(userId);
     setMyName(playerName);
 
-    socket.emit("quick-match", { name: playerName, userId: myUserId }, (res: { queued: boolean } | { error: string }) => {
+    socket.emit("quick-match", { name: playerName, userId }, (res: { queued: boolean } | { error: string }) => {
       if ("error" in res) {
         setMatching(false);
         return;
@@ -61,7 +61,7 @@ export default function LobbyPage() {
 
     const code = generateRoomCode();
     const playerName = getPlayerName();
-    socket.emit("create-room", { code, name: playerName, userId: getPlayerId() }, (response: { roomId: string; userId: string }) => {
+    socket.emit("create-room", { code, name: playerName, userId }, (response: { roomId: string; userId: string }) => {
       setRoomId(response.roomId);
       setMyUserId(response.userId);
       setMyName(playerName);
@@ -78,7 +78,7 @@ export default function LobbyPage() {
     const playerName = getPlayerName();
     socket.emit(
       "join-room",
-      { code: joinCode.trim().toUpperCase(), name: playerName, userId: getPlayerId() },
+      { code: joinCode.trim().toUpperCase(), name: playerName, userId },
       (response: { roomId: string; userId: string } | { error: string }) => {
         if ("error" in response) {
           setError(response.error);

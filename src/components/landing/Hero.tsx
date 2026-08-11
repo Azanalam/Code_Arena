@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CountUp } from "./CountUp";
 import { Particles } from "./Particles";
 import { TypingCode } from "./TypingCode";
+import { LiveStats } from "./LiveStats";
 import type { LandingUser } from "./types";
 
 const PLAYERS = [
@@ -112,7 +113,7 @@ export function Hero({ user }: { user: LandingUser | null }) {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs text-zinc-300 mb-6">
               <span className="live-dot w-2 h-2 rounded-full bg-emerald-400" />
-              Community battles happening right now
+              <LiveStats fallback="Community battles happening right now" />
             </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.05] tracking-tight">

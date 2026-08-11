@@ -14,6 +14,7 @@ export function Particles({ className = "" }: ParticlesProps) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let raf = 0;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);

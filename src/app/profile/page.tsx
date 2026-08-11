@@ -24,6 +24,7 @@ export default function ProfilePage() {
   const { data: session, status } = useSession();
   const [submissions, setSubmissions] = useState<SubmissionSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rating, setRating] = useState<number | null>(null);
 
   useEffect(() => {
     if (status !== "authenticated" || !session?.user?.id) return;
@@ -38,6 +39,9 @@ export default function ProfilePage() {
           setSubmissions(data);
         }
         setLoading(false);
+      });
+      s.emit("get-profile", { userId }, (data: { rating: number } | { error: string }) => {
+        if (!("error" in data)) setRating(data.rating);
       });
     };
     if (s.connected) onConnect();
@@ -92,6 +96,16 @@ export default function ProfilePage() {
     css: "CSS",
   };
 
+  const tiers = [
+    { min: 3000, label: "Grandmaster", cls: "text-red-300 border-red-500/60 bg-red-500/10" },
+    { min: 2400, label: "Master", cls: "text-amber-300 border-amber-500/60 bg-amber-500/10" },
+    { min: 1900, label: "Expert", cls: "text-emerald-300 border-emerald-500/60 bg-emerald-500/10" },
+    { min: 1500, label: "Advanced", cls: "text-lime-300 border-lime-500/60 bg-lime-500/10" },
+    { min: 1100, label: "Intermediate", cls: "text-sky-300 border-sky-500/60 bg-sky-500/10" },
+    { min: 0, label: "Rookie", cls: "text-zinc-300 border-zinc-600 bg-zinc-800/60" },
+  ];
+  const tier = tiers.find((t) => rating !== null && rating >= t.min) ?? tiers[tiers.length - 1];
+
   return (
     <div className="min-h-screen bg-black text-white">
       <header className="flex items-center gap-4 px-4 sm:px-6 py-4 bg-zinc-900/80 border-b border-zinc-800">
@@ -111,7 +125,16 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center col-span-2 sm:col-span-3 lg:col-span-2">
+            <div className="text-3xl font-bold text-zinc-50">{rating ?? "—"}</div>
+            <div className="text-xs text-zinc-500 mt-1">Rating</div>
+            {rating !== null && (
+              <span className={`inline-block mt-2 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${tier.cls}`}>
+                {tier.label}
+              </span>
+            )}
+          </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
             <div className="text-3xl font-bold text-stone-200">{attempts}</div>
             <div className="text-xs text-zinc-500 mt-1">Attempts</div>

@@ -11,7 +11,7 @@ import { Scoreboard } from "@/components/Scoreboard";
 import { ProblemPanel } from "@/components/ProblemPanel";
 import { AiHint } from "@/components/AiHint";
 import { getSocket } from "@/lib/socket";
-import { playSubmit } from "@/lib/sounds";
+import { playSubmit, isMuted, setMuted } from "@/lib/sounds";
 
 export default function GamePage({ params }: { params: Promise<{ roomId: string }> }) {
   const { roomId } = use(params);
@@ -31,6 +31,30 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
   const [category, setCategory] = useState("all");
   const [difficulty, setDifficulty] = useState("all");
   const [mobileTab, setMobileTab] = useState<"problem" | "editor" | "players" | "chat">("problem");
+  const [muted, setMutedState] = useState(isMuted());
+
+  const flash =
+    testResults && testResults.length > 0 && testResults.every((r) => r.passed)
+      ? "All tests passed!"
+      : null;
+
+  const [scoreFlash, setScoreFlash] = useState<string | null>(null);
+  useEffect(() => {
+    if (!scoreFlash) return;
+    const t = setTimeout(() => setScoreFlash(null), 4000);
+    return () => clearTimeout(t);
+  }, [scoreFlash]);
+
+  useEffect(() => {
+    const s = getSocket();
+    const onScore = ({ userId: uid, score }: { userId: string; score: number }) => {
+      if (uid === myUserId && score > 0) setScoreFlash(`Solved! +${score} pts`);
+    };
+    s.on("score-update", onScore);
+    return () => {
+      s.off("score-update", onScore);
+    };
+  }, [myUserId]);
 
   useEffect(() => {
     setRoomId(roomId);
@@ -74,7 +98,8 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
       <div className="h-dvh bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-zinc-400 text-sm">Connecting to game...</p>
+          <p className="text-zinc-400 text-sm">Reconnecting to game…</p>
+          <p className="text-zinc-600 text-xs">If this persists, the room may have ended.</p>
         </div>
       </div>
     );
@@ -88,12 +113,12 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
         <p className="text-zinc-500 text-sm mb-8 tracking-widest uppercase">Get Ready</p>
         <div
           key={countdown}
-          className="text-7xl sm:text-8xl font-bold text-white animate-[countdown_1s_ease-in-out]"
-          style={{ textShadow: "0 0 40px rgba(59,130,246,0.6)" }}
+          className="w-28 h-28 sm:w-36 sm:h-36 rounded-full flex items-center justify-center animate-[countdown_1s_ease-in-out]"
+          style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.15), 0 0 60px rgba(255,255,255,0.12)" }}
         >
-          {countdown}
+          <span className="text-7xl sm:text-8xl font-bold text-white">{countdown}</span>
         </div>
-        <p className="text-zinc-600 text-xs mt-8">The problem will be revealed soon...</p>
+        <p className="text-zinc-600 text-xs mt-8">The problem will be revealed soon…</p>
       </div>
     );
   }
@@ -156,6 +181,21 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
           )}
         </div>
         <div className="flex items-center gap-2 ml-auto">
+          <button
+            onClick={() => {
+              const next = !muted;
+              setMuted(next);
+              setMutedState(next);
+            }}
+            className="p-2 text-zinc-400 hover:text-white transition-colors"
+            aria-label={muted ? "Unmute sounds" : "Mute sounds"}
+          >
+            {muted ? (
+              <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+            ) : (
+              <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+            )}
+          </button>
           {status === "playing" && !isSpectator && <AiHint />}
           {status === "playing" && !isSpectator && (
             <>
@@ -274,6 +314,12 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
         </div>
       )}
 
+      {(flash || scoreFlash) && status === "playing" && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-40 bg-white text-zinc-950 text-sm font-semibold px-5 py-2 rounded-full shadow-2xl shadow-black/50">
+          {flash || scoreFlash}
+        </div>
+      )}
+
       {testResults && status !== "finished" && (
         <div className="absolute left-3 right-3 sm:left-auto sm:right-4 sm:w-96 bottom-16 lg:bottom-4 bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-2xl max-h-80 overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
@@ -284,28 +330,35 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               {testResults.filter((r) => r.passed).length}/{testResults.length} passed
             </span>
           </div>
-          <div className="space-y-2">
-            {testResults.map((r, i) => (
-              <div key={i} className={`text-xs p-2 rounded ${
-                r.passed ? "bg-green-900/20 text-green-300" : "bg-red-900/20 text-red-300"
-              }`}>
-                <div className="flex items-center gap-1.5 mb-1">
-                  {r.passed ? (
-                    <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  ) : (
-                    <svg className="w-3.5 h-3.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                  )}
-                  <span className="font-medium">Test {i + 1}</span>
-                </div>
-                {!r.passed && (
-                  <div className="space-y-0.5 ml-5">
-                    <div>Expected: <span className="font-mono text-white/70">{r.expected}</span></div>
-                    <div>Got: <span className="font-mono text-white/70">{r.actual}</span></div>
+          {testResults.every((r) => r.passed) ? (
+            <div className="text-xs p-3 rounded bg-green-900/20 text-green-300 flex items-center gap-2">
+              <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              All {testResults.length} tests passed — you solved it!
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {testResults.map((r, i) => (
+                r.passed ? (
+                  <div key={i} className="text-[11px] px-2 py-1 rounded bg-green-900/10 text-green-400/70 flex items-center gap-1.5">
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    Test {i + 1} passed
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+                ) : (
+                  <div key={i} className="text-xs p-2 rounded bg-red-900/20 text-red-300">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <svg className="w-3.5 h-3.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      <span className="font-medium">Test {i + 1} failed</span>
+                    </div>
+                    <div className="space-y-0.5 ml-5">
+                      <div>Input: <span className="font-mono text-white/70">{r.input}</span></div>
+                      <div>Expected: <span className="font-mono text-white/70">{r.expected}</span></div>
+                      <div>Got: <span className="font-mono text-white/70">{r.actual}</span></div>
+                    </div>
+                  </div>
+                )
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

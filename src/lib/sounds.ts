@@ -1,3 +1,13 @@
+export function isMuted(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem("codearena_muted") === "1";
+}
+
+export function setMuted(muted: boolean) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem("codearena_muted", muted ? "1" : "0");
+}
+
 let ctx: AudioContext | null = null;
 
 function getCtx() {
@@ -6,6 +16,7 @@ function getCtx() {
 }
 
 function playTone(freq: number, duration: number, type: OscillatorType = "sine") {
+  if (isMuted()) return;
   try {
     const c = getCtx();
     const osc = c.createOscillator();
