@@ -17,6 +17,7 @@ const WRONG_CODE = "function main(nums) { return 42; }";
 let server: ChildProcess;
 let prisma: PrismaClient;
 const sockets: Socket[] = [];
+const createdRoomIds: string[] = [];
 
 function connect(): Promise<Socket> {
   return new Promise((resolve, reject) => {
@@ -97,6 +98,9 @@ after(async () => {
     await prisma.problem
       .deleteMany({ where: { category: TEST_CATEGORY } })
       .catch(() => {});
+    await prisma.leaderboardEntry
+      .deleteMany({ where: { roomId: { in: createdRoomIds } } })
+      .catch(() => {});
     await prisma.$disconnect().catch(() => {});
   }
   if (server) server.kill();
@@ -112,6 +116,7 @@ describe("socket server flow", () => {
       userId: "alice-e2e",
     });
     assert.ok(roomId);
+    createdRoomIds.push(roomId);
 
     const state = await stateP;
     assert.equal(state.status, "waiting");
@@ -183,6 +188,7 @@ describe("socket server flow", () => {
       name: "Alice",
       userId: "alice-game",
     });
+    createdRoomIds.push(roomId);
     await emitAck<{ roomId: string }>(guest, "join-room", {
       code: ROOM_CODE + "G",
       name: "Bob",

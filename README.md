@@ -21,10 +21,13 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 ## Testing
 
 ```bash
-npm run test
+npm run test        # unit + socket integration tests (needs DATABASE_URL)
+npm run test:unit   # unit tests only (no DB required)
 ```
 
 Runs the unit tests (`tests/gameLogic.test.ts`, `tests/piston.test.ts`) and the socket-server integration test (`tests/server.integration.test.ts`). The integration test boots the real server on port `3211`, connects two socket.io clients, and plays a full game against the local database (create/join room, chat, AI hint, start game, code submission, scoring, game-over, room cleanup). It requires a reachable `DATABASE_URL` (from `.env`) with seeded problems.
+
+CI (GitHub Actions, `.github/workflows/ci.yml`) runs lint + unit tests + build on every push and PR; the integration test runs only when the `DATABASE_URL` repository secret is configured. [![CI](https://github.com/Azanalam/Code_Arena/actions/workflows/ci.yml/badge.svg)](https://github.com/Azanalam/Code_Arena/actions/workflows/ci.yml)
 
 ## Scripts
 
@@ -32,6 +35,7 @@ Runs the unit tests (`tests/gameLogic.test.ts`, `tests/piston.test.ts`) and the 
 - `npm run build` — `prisma generate` + production build
 - `npm run lint` — ESLint over `.ts`/`.tsx`
 - `npm run test` — Node test runner via tsx
+- `npm run test:unit` — unit tests only, no database required
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

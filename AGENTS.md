@@ -10,6 +10,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `npm run build` — prisma generate + production build
 - `npm run lint` — `eslint . --ext .ts,.tsx`
 - `npm run test` — `node --import tsx --test "tests/*.test.ts"` (unit + socket integration tests; integration test needs a reachable DATABASE_URL)
+- `npm run test:unit` — unit tests only, no database required
+
+# CI
+
+- `.github/workflows/ci.yml`: lint + unit tests + build run on every push/PR (branches: main, newUI, Tests). The socket integration job runs only when the `DATABASE_URL` repository secret is configured.
 
 # Conventions
 
