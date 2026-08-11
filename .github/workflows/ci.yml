@@ -23,7 +23,6 @@ jobs:
   integration:
     name: Integration tests (needs DATABASE_URL)
     runs-on: ubuntu-latest
-    if: ${{ secrets.DATABASE_URL != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,6 +30,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run test
+      - name: Run integration tests
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run test

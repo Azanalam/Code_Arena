@@ -13,6 +13,7 @@ const ROOM_CODE = `E${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 const TEST_CATEGORY = `e2e-cat-${Date.now()}`;
 const CORRECT_CODE = "function main(...nums) { return nums.reduce((a, b) => a + b, 0); }";
 const WRONG_CODE = "function main(nums) { return 42; }";
+const DB_AVAILABLE = !!process.env.DATABASE_URL;
 
 let server: ChildProcess;
 let prisma: PrismaClient;
@@ -77,6 +78,7 @@ async function waitForServer(maxMs = 30_000): Promise<void> {
 }
 
 before(async () => {
+  if (!DB_AVAILABLE) return;
   prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
   });
@@ -93,6 +95,7 @@ before(async () => {
 });
 
 after(async () => {
+  if (!DB_AVAILABLE) return;
   for (const s of sockets) s.close();
   if (prisma) {
     await prisma.problem
@@ -106,7 +109,7 @@ after(async () => {
   if (server) server.kill();
 });
 
-describe("socket server flow", () => {
+describe("socket server flow", { skip: !DB_AVAILABLE }, () => {
   it("creates a room, joins it, chats, gets hints, and spectates", async () => {
     const host = await connect();
     const stateP = eventOnce<{ players: unknown[]; status: string }>(host, "room-state");
