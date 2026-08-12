@@ -39,10 +39,10 @@ export function Navbar({ user }: { user: LandingUser | null }) {
 
         <div className="flex items-center gap-3">
           {user ? (
-            <div className="hidden sm:flex items-center gap-2 text-sm text-zinc-300">
+            <Link href="/profile" className="hidden sm:flex items-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors">
               <Avatar name={user.name} image={user.image} size={28} className="ring-1" />
               <span className="max-w-[120px] truncate">{user.name}</span>
-            </div>
+            </Link>
           ) : null}
           {user ? (
             <button

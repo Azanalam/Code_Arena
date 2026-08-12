@@ -50,9 +50,11 @@ export function useSocket(roomId: string) {
   useEffect(() => {
     const s = getSocket();
 
+    const resolvePlayerId = () => useGameStore.getState().myUserId ?? getPlayerId();
+
     const handleConnect = () => {
       setConnecting(false);
-      s.emit("join-room", { roomId, userId: getPlayerId() });
+      s.emit("join-room", { roomId, userId: resolvePlayerId() });
     };
 
     const handleRoomState = (state: RoomStatePayload) => {
@@ -118,7 +120,7 @@ export function useSocket(roomId: string) {
 
     if (s.connected) {
       setConnecting(false);
-      s.emit("join-room", { roomId, userId: getPlayerId() });
+      s.emit("join-room", { roomId, userId: resolvePlayerId() });
     } else {
       s.connect();
     }
