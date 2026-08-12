@@ -14,6 +14,8 @@ export interface ProblemData {
   examples: { input: string; output: string; explanation?: string }[];
   testCases: TestCase[];
   starterCode: string;
+  languages?: string[];
+  starterCodes?: Record<string, string> | null;
 }
 
 export interface GameState {

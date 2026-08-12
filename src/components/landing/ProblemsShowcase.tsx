@@ -12,6 +12,13 @@ const DIFF_COLORS: Record<ProblemPreview["difficulty"], { badge: string; pulse: 
 
 const CATEGORY_LABEL: Record<string, string> = {
   javascript: "JS",
+  python: "Py",
+  java: "Java",
+  cpp: "C++",
+  go: "Go",
+  rust: "Rust",
+  csharp: "C#",
+  typescript: "TS",
   html: "HTML",
   css: "CSS",
 };
@@ -36,7 +43,7 @@ export function ProblemsShowcase() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <Reveal className="text-center mb-12">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-stone-400 mb-3">The battleground</p>
-          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">40+ challenges, three difficulty tiers</h2>
+          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">200+ challenges, three difficulty tiers</h2>
         </Reveal>
 
         <Reveal className="flex justify-center mb-10">

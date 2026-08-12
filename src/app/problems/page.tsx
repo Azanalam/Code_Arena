@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getSocket } from "@/lib/socket";
 import { getPlayerId } from "@/lib/gameLogic";
+import { languageLabel } from "@/lib/languages";
 
 interface ProblemSummary {
   id: string;
@@ -12,6 +13,7 @@ interface ProblemSummary {
   slug: string;
   difficulty: string;
   category: string;
+  languages?: string[];
 }
 
 export default function ProblemsPage() {
@@ -143,6 +145,16 @@ p.difficulty === "easy" ? "bg-zinc-800/80 text-zinc-200" :
                   {p.difficulty}
                 </span>
                 <span className="flex-1 font-medium truncate">{p.title}</span>
+                <span className="hidden md:flex items-center gap-1 flex-shrink-0">
+                  {(p.languages?.length ? p.languages : [p.category]).slice(0, 3).map((l) => (
+                    <span key={l} className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                      {languageLabel(l)}
+                    </span>
+                  ))}
+                  {(p.languages?.length ?? 0) > 3 && (
+                    <span className="text-[10px] text-zinc-600">+{(p.languages?.length ?? 0) - 3}</span>
+                  )}
+                </span>
                 <span className="hidden sm:block text-xs text-zinc-600 uppercase">{p.category}</span>
                 <button onClick={() => startPractice(p.slug)} className="text-xs px-3 sm:px-4 py-1.5 bg-white hover:bg-zinc-200 text-zinc-950 rounded-md font-medium transition-all flex-shrink-0">
                   Practice

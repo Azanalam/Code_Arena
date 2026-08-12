@@ -30,6 +30,7 @@ interface GameStore {
   submitting: boolean;
   connecting: boolean;
   countdown: number;
+  language: string;
 
   setRoomId: (id: string) => void;
   setPlayers: (players: PlayerState[]) => void;
@@ -43,6 +44,7 @@ interface GameStore {
   setSubmitting: (v: boolean) => void;
   setConnecting: (v: boolean) => void;
   setCountdown: (count: number) => void;
+  setLanguage: (language: string) => void;
 
   addPlayer: (player: PlayerState) => void;
   removePlayer: (userId: string) => void;
@@ -66,6 +68,7 @@ const initialState = {
   submitting: false,
   connecting: true,
   countdown: 0,
+  language: "javascript",
 };
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -97,6 +100,7 @@ export const useGameStore = create<GameStore>((set) => ({
   setSubmitting: (submitting) => set({ submitting }),
   setConnecting: (connecting) => set({ connecting }),
   setCountdown: (countdown) => set({ countdown }),
+  setLanguage: (language) => set({ language }),
 
   addPlayer: (player) =>
     set((state) => ({

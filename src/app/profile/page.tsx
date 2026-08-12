@@ -92,6 +92,13 @@ export default function ProfilePage() {
 
   const categoryLabels: Record<string, string> = {
     javascript: "JavaScript",
+    python: "Python",
+    java: "Java",
+    cpp: "C++",
+    go: "Go",
+    rust: "Rust",
+    csharp: "C#",
+    typescript: "TypeScript",
     html: "HTML",
     css: "CSS",
   };

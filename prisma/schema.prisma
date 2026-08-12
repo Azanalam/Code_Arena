@@ -57,17 +57,19 @@ model VerificationToken {
 }
 
 model Problem {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  difficulty  String
-  category    String   @default("javascript")
-  description String
-  examples    Json
-  testCases   Json
-  starterCode String
-  createdAt   DateTime @default(now())
-  rooms       Room[]
+  id           String   @id @default(cuid())
+  title        String
+  slug         String   @unique
+  difficulty   String
+  category     String   @default("javascript")
+  description  String
+  examples     Json
+  testCases    Json
+  starterCode  String
+  languages    String[] @default(["javascript"])
+  starterCodes Json?
+  createdAt    DateTime @default(now())
+  rooms        Room[]
 }
 
 model Room {

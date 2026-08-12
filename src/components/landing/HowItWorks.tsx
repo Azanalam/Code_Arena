@@ -6,7 +6,7 @@ const STEPS = [
   {
     n: "01",
     title: "Pick your challenge",
-    desc: "Create a room, share the code, or hop into solo practice. Choose Easy, Medium or Hard across JavaScript, HTML and CSS.",
+    desc: "Create a room, share the code, or hop into solo practice. Choose Easy, Medium or Hard across 8 languages — JavaScript, Python, Java, C++, Go, Rust, C# and TypeScript.",
   },
   {
     n: "02",

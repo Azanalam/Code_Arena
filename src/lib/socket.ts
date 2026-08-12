@@ -44,7 +44,7 @@ export function useSocket(roomId: string) {
     setPlayers, setProblem, setStatus, setTimeRemaining,
     addChatMessage, addPlayer, removePlayer, updatePlayerScore,
     setConnecting, setTestResults, setSubmitting,
-    setCode, setCountdown, setMyUserId,
+    setCode, setCountdown, setMyUserId, setLanguage,
   } = useGameStore();
 
   useEffect(() => {
@@ -63,6 +63,11 @@ export function useSocket(roomId: string) {
       setCountdown(0);
       setConnecting(false);
       if (state.userId) setMyUserId(state.userId);
+      if (state.problem?.languages?.length) {
+        const langs = state.problem.languages;
+        const current = useGameStore.getState().language;
+        if (!langs.includes(current)) setLanguage(langs[0]);
+      }
     };
 
     const handleTestResults = (results: TestResultsPayload) => {
@@ -91,7 +96,15 @@ export function useSocket(roomId: string) {
       setStatus("playing");
       setTimeRemaining(timeLimit);
       setCountdown(0);
-      if (problem?.starterCode) setCode(problem.starterCode);
+      const langs = problem?.languages?.length ? problem.languages : [problem?.category ?? "javascript"];
+      const current = useGameStore.getState().language;
+      const next = langs.includes(current) ? current : langs[0];
+      if (next !== current) setLanguage(next);
+      const starter =
+        problem?.starterCodes?.[next] ??
+        problem?.starterCodes?.[langs[0]] ??
+        problem?.starterCode;
+      if (starter) setCode(starter);
     });
     s.on("timer-tick", (time: number) => setTimeRemaining(time));
     s.on("game-over", ({ players }: GameOverPayload) => {
@@ -137,6 +150,7 @@ export function useSocket(roomId: string) {
     setCode,
     setSubmitting,
     setTestResults,
+    setLanguage,
     addChatMessage,
     addPlayer,
     removePlayer,

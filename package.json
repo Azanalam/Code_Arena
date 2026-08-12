@@ -13,7 +13,7 @@
     "lint": "eslint . --ext .ts,.tsx",
     "test": "node --import tsx --test \"tests/*.test.ts\"",
     "pretest": "prisma generate",
-    "test:unit": "node --import tsx --test tests/gameLogic.test.ts tests/piston.test.ts",
+    "test:unit": "node --import tsx --test tests/gameLogic.test.ts tests/piston.test.ts tests/languages.test.ts tests/remote-judge.test.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",

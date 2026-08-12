@@ -4,8 +4,9 @@ import next from "next";
 import { Server } from "socket.io";
 import { PrismaClient, Prisma } from "./src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { runTestCases, runMarkupTestCases } from "./src/lib/piston";
+import { runTestCases, runMarkupTestCases, runRemoteTestCases } from "./src/lib/piston";
 import { calculateScore, generateRoomCode, type Difficulty } from "./src/lib/gameLogic";
+import { LANGUAGE_IDS } from "./src/lib/languages";
 
 const dev = process.env.NODE_ENV !== "production";
 const port = parseInt(process.env.PORT ?? "3000", 10);
@@ -33,6 +34,8 @@ type RoomProblem = {
   examples: { input: string; output: string; explanation?: string }[];
   testCases: { input: string; expected: string }[];
   starterCode: string;
+  languages?: string[];
+  starterCodes?: Record<string, string> | null;
 };
 
 type Room = {
@@ -110,7 +113,11 @@ async function updateRatings(room: Room) {
 
 async function fetchRandomProblem(category?: string, difficulty?: string) {
   const where: Prisma.ProblemWhereInput = {};
-  if (category && category !== "all") where.category = category;
+  if (category && category !== "all") {
+    if (category === "html" || category === "css") where.category = category;
+    else if ((LANGUAGE_IDS as readonly string[]).includes(category)) where.languages = { has: category };
+    else where.category = category;
+  }
   if (difficulty && difficulty !== "all") where.difficulty = difficulty;
   const problemCount = await prisma.problem.count({ where });
   if (problemCount === 0) return null;
@@ -126,6 +133,8 @@ async function fetchRandomProblem(category?: string, difficulty?: string) {
     examples: typeof dbProblem.examples === "string" ? JSON.parse(dbProblem.examples) : dbProblem.examples,
     testCases: typeof dbProblem.testCases === "string" ? JSON.parse(dbProblem.testCases) : dbProblem.testCases,
     starterCode: dbProblem.starterCode,
+    languages: dbProblem.languages,
+    starterCodes: typeof dbProblem.starterCodes === "string" ? JSON.parse(dbProblem.starterCodes) : dbProblem.starterCodes,
   };
 }
 
@@ -353,7 +362,7 @@ function setupSocketServer(httpServer: import("http").Server) {
     }
   });
 
-  socket.on("submit-code", async ({ roomId, code, userId }) => {
+  socket.on("submit-code", async ({ roomId, code, userId, language }) => {
     if (!roomId) return;
     const room = rooms.get(roomId);
     if (!room || room.status !== "playing") return;
@@ -362,6 +371,11 @@ function setupSocketServer(httpServer: import("http").Server) {
     if (!player || player.solved) return;
 
     const testCases = room.problem?.testCases ?? [];
+    const category = room.problem?.category ?? "javascript";
+    const isMarkup = category === "html" || category === "css";
+    const submittedLanguage = typeof language === "string" ? language.toLowerCase() : "";
+    const lang = isMarkup ? category : (LANGUAGE_IDS as readonly string[]).includes(submittedLanguage) ? submittedLanguage : "javascript";
+
     if (testCases.length === 0) {
       player.solved = true;
       player.score += 200;
@@ -369,15 +383,16 @@ function setupSocketServer(httpServer: import("http").Server) {
       if (userId && room.problem?.id) {
         try {
           await prisma.submission.create({
-            data: { userId, problemId: room.problem.id, roomId, code, language: room.problem.category ?? "javascript", passed: true, score: 200 },
+            data: { userId, problemId: room.problem.id, roomId, code, language: lang, passed: true, score: 200 },
           });
         } catch (err) { console.error("Failed to save submission:", err); }
       }
     } else {
-      const category = room.problem?.category ?? "javascript";
-      const result = category === "html" || category === "css"
+      const result = isMarkup
         ? runMarkupTestCases(code, testCases, category)
-        : await runTestCases(code, testCases);
+        : lang === "javascript"
+          ? await runTestCases(code, testCases)
+          : await runRemoteTestCases(lang, code, testCases);
 
       socket.emit("test-results", result);
 
@@ -400,7 +415,7 @@ function setupSocketServer(httpServer: import("http").Server) {
         if (userId && room.problem?.id) {
           try {
             await prisma.submission.create({
-              data: { userId, problemId: room.problem.id, roomId, code, language: room.problem.category ?? "javascript", passed: true, score },
+              data: { userId, problemId: room.problem.id, roomId, code, language: lang, passed: true, score },
             });
           } catch (err) { console.error("Failed to save submission:", err); }
         }
@@ -408,7 +423,7 @@ function setupSocketServer(httpServer: import("http").Server) {
         try {
           await prisma.submission.create({
             data: {
-              userId, problemId: room.problem.id, roomId, code, language: room.problem.category ?? "javascript",
+              userId, problemId: room.problem.id, roomId, code, language: lang,
               passed: false, score: 0,
               output: (result.results.find((r) => !r.passed)?.actual ?? "").slice(0, 500),
             },
@@ -461,6 +476,8 @@ function setupSocketServer(httpServer: import("http").Server) {
       callback?.(problems.map((p) => ({
         id: p.id, title: p.title, slug: p.slug,
         difficulty: p.difficulty, category: p.category,
+        languages: p.languages,
+        starterCodes: typeof p.starterCodes === "string" ? JSON.parse(p.starterCodes) : p.starterCodes,
       })));
     } catch {
       callback?.([]);
@@ -484,6 +501,8 @@ function setupSocketServer(httpServer: import("http").Server) {
           examples: typeof dbProblem.examples === "string" ? JSON.parse(dbProblem.examples) : dbProblem.examples,
           testCases: typeof dbProblem.testCases === "string" ? JSON.parse(dbProblem.testCases) : dbProblem.testCases,
           starterCode: dbProblem.starterCode,
+          languages: dbProblem.languages,
+          starterCodes: typeof dbProblem.starterCodes === "string" ? JSON.parse(dbProblem.starterCodes) : dbProblem.starterCodes,
         },
         status: "playing" as const,
         timeRemaining: 0,

@@ -12,6 +12,7 @@ import { ProblemPanel } from "@/components/ProblemPanel";
 import { AiHint } from "@/components/AiHint";
 import { getSocket } from "@/lib/socket";
 import { playSubmit, isMuted, setMuted } from "@/lib/sounds";
+import { PROBLEM_LANGUAGES, languageLabel } from "@/lib/languages";
 
 export default function GamePage({ params }: { params: Promise<{ roomId: string }> }) {
   const { roomId } = use(params);
@@ -24,7 +25,7 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
   const {
     code, setCode, status, problem, myUserId, players,
     connecting, testResults, submitting, setSubmitting, reset, countdown,
-    setRoomId,
+    setRoomId, language, setLanguage,
   } = useGameStore();
   const isHost = players[0]?.userId === myUserId;
   const [copied, setCopied] = useState(false);
@@ -69,8 +70,8 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
   const handleSubmit = useCallback(() => {
     setSubmitting(true);
     playSubmit();
-    getSocket().emit("submit-code", { roomId, code, userId: session?.user?.id });
-  }, [roomId, code, setSubmitting, session?.user?.id]);
+    getSocket().emit("submit-code", { roomId, code, userId: session?.user?.id, language });
+  }, [roomId, code, setSubmitting, session?.user?.id, language]);
 
   const handleStartGame = useCallback(() => {
     getSocket().emit("start-game", { roomId, category, difficulty });
@@ -159,7 +160,9 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
                 className="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-md outline-none focus:ring-1 focus:ring-zinc-400 border border-zinc-700 cursor-pointer"
               >
                 <option value="all">All</option>
-                <option value="javascript">JavaScript</option>
+                {PROBLEM_LANGUAGES.map((l) => (
+                  <option key={l.id} value={l.id}>{l.label}</option>
+                ))}
                 <option value="html">HTML</option>
                 <option value="css">CSS</option>
               </select>
@@ -196,6 +199,22 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
             )}
           </button>
+          {status === "playing" && !isSpectator && (problem?.languages?.length ?? 0) > 1 && (
+            <select
+              value={problem?.languages?.includes(language) ? language : problem?.languages?.[0]}
+              onChange={(e) => {
+                const next = e.target.value;
+                setLanguage(next);
+                setCode(problem?.starterCodes?.[next] ?? problem?.starterCode ?? "");
+              }}
+              className="bg-zinc-800 text-white text-xs px-2 py-1.5 rounded-md outline-none focus:ring-1 focus:ring-zinc-400 border border-zinc-700 cursor-pointer"
+              title="Language"
+            >
+              {(problem?.languages ?? []).map((l) => (
+                <option key={l} value={l}>{languageLabel(l)}</option>
+              ))}
+            </select>
+          )}
           {status === "playing" && !isSpectator && <AiHint />}
           {status === "playing" && !isSpectator && (
             <>
@@ -243,7 +262,11 @@ export default function GamePage({ params }: { params: Promise<{ roomId: string 
               <Editor
                 value={code}
                 onChange={setCode}
-                language={problem?.category === "html" ? "html" : problem?.category === "css" ? "css" : "javascript"}
+                language={
+                  problem?.category === "html" ? "html"
+                  : problem?.category === "css" ? "css"
+                  : (problem?.languages?.includes(language) ? language : (problem?.languages?.[0] ?? "javascript"))
+                }
                 readOnly={status !== "playing"}
               />
             </div>
